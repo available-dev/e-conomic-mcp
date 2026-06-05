@@ -12,6 +12,33 @@ covers the whole API**: a generic request tool reaches every endpoint, typed
 convenience tools cover the common workflows, and per-endpoint tools can be
 generated from an OpenAPI spec.
 
+## Quickstart
+
+```bash
+# install
+npm install -g @available/e-conomic-mcp
+
+# store your e-conomic credentials locally (app secret + agreement grant token)
+e-conomic-mcp auth login
+
+# verify it talks to the API
+e-conomic-mcp doctor        # → ✓ Authenticated. N resource collections available.
+```
+
+Then add it to your MCP client (e.g. Claude Code):
+
+```bash
+claude mcp add e-conomic -- e-conomic-mcp
+```
+
+…or in `claude_desktop_config.json`:
+
+```json
+{ "mcpServers": { "e-conomic": { "command": "e-conomic-mcp" } } }
+```
+
+Now ask Claude things like *"list my 5 most recent e-conomic customers"*.
+
 ## Features
 
 - **Full API coverage** via a universal `economic_request` tool — any method,
@@ -34,10 +61,10 @@ generated from an OpenAPI spec.
 
 ## Install
 
-### From npm (once published)
+### From npm
 
 ```bash
-npm install -g e-conomic-mcp
+npm install -g @available/e-conomic-mcp
 ```
 
 This puts an `e-conomic-mcp` command on your PATH.

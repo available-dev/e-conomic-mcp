@@ -84,7 +84,10 @@ export function genericTools(
             "Optional query parameters. Common ones: filter, sort, skippages, pagesize.",
         },
         body: {
-          description: "Optional JSON body for POST/PUT/PATCH requests.",
+          type: ["object", "array"],
+          description:
+            "Optional JSON body for POST/PUT/PATCH requests. Pass it as a structured " +
+            "object/array (not a stringified JSON blob); the server serializes it for you.",
         },
       }),
       required: ["method", "path"],

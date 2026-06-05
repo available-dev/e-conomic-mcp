@@ -16,7 +16,7 @@ generated from an OpenAPI spec.
 
 ```bash
 # install
-npm install -g @available/e-conomic-mcp
+npm install -g @available-dev/e-conomic-mcp
 
 # store your e-conomic credentials locally (app secret + agreement grant token)
 e-conomic-mcp auth login
@@ -68,7 +68,7 @@ Now ask Claude things like *"list my 5 most recent e-conomic customers"*.
 ### From npm
 
 ```bash
-npm install -g @available/e-conomic-mcp
+npm install -g @available-dev/e-conomic-mcp
 ```
 
 This puts an `e-conomic-mcp` command on your PATH.

@@ -9,12 +9,12 @@
 
 import type { EconomicClient } from "../economicClient.js";
 import type { HttpMethod } from "../economicClient.js";
-import type { OpenApiSpec, OperationInfo } from "../openapi.js";
+import type { ApiSpec, OperationInfo } from "../openapi.js";
 import type { ToolDefinition } from "./types.js";
 
 export function dynamicTools(
   client: EconomicClient,
-  spec: OpenApiSpec,
+  spec: ApiSpec,
   limit: number,
 ): ToolDefinition[] {
   const tools: ToolDefinition[] = [];

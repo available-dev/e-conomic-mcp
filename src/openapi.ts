@@ -11,6 +11,18 @@
 
 import { readFile } from "node:fs/promises";
 
+/**
+ * Common surface implemented by every spec source (OpenAPI/Swagger and the
+ * native e-conomic per-endpoint schema directory). The tool layer depends only
+ * on this interface.
+ */
+export interface ApiSpec {
+  readonly operations: OperationInfo[];
+  readonly version: string;
+  listByTag(): Record<string, OperationInfo[]>;
+  findOperation(query: string): OperationInfo | undefined;
+}
+
 export interface OperationInfo {
   /** Stable identifier used as the tool name suffix. */
   operationId: string;
@@ -41,7 +53,7 @@ interface RawSpec {
   components?: { schemas?: Record<string, any> };
 }
 
-export class OpenApiSpec {
+export class OpenApiSpec implements ApiSpec {
   private constructor(
     readonly raw: RawSpec,
     readonly operations: OperationInfo[],

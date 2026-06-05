@@ -12,6 +12,7 @@ export interface Config {
   appSecretToken: string;
   agreementGrantToken: string;
   openapiSpec?: string;
+  schemaDir?: string;
   dynamicTools: boolean;
   dynamicToolsLimit: number;
   pageSize: number;
@@ -55,6 +56,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     appSecretToken,
     agreementGrantToken,
     openapiSpec: env.ECONOMIC_OPENAPI_SPEC?.trim() || undefined,
+    schemaDir: env.ECONOMIC_SCHEMA_DIR?.trim() || undefined,
     dynamicTools: parseBoolEnv("ECONOMIC_DYNAMIC_TOOLS", false),
     dynamicToolsLimit: parseIntEnv("ECONOMIC_DYNAMIC_TOOLS_LIMIT", 200),
     pageSize,

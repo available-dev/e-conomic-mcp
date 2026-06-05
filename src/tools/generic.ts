@@ -7,12 +7,12 @@
 
 import type { EconomicClient } from "../economicClient.js";
 import { EconomicApiError, type HttpMethod } from "../economicClient.js";
-import type { OpenApiSpec } from "../openapi.js";
+import type { ApiSpec } from "../openapi.js";
 import type { ToolDefinition } from "./types.js";
 
 export function genericTools(
   client: EconomicClient,
-  spec: OpenApiSpec | undefined,
+  spec: ApiSpec | undefined,
 ): ToolDefinition[] {
   const tools: ToolDefinition[] = [];
 

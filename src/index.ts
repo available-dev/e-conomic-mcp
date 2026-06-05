@@ -17,7 +17,7 @@ async function main(): Promise<void> {
 
   console.error(
     `[e-conomic-mcp] Ready on stdio. ${toolCount} tools available` +
-      `${specLoaded ? " (OpenAPI spec loaded)" : ""}. Base URL: ${config.baseUrl}`,
+      `${specLoaded ? " (API schema loaded)" : ""}. Base URL: ${config.baseUrl}`,
   );
 }
 

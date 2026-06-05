@@ -88,7 +88,8 @@ The server speaks MCP over stdio.
 | `ECONOMIC_AGREEMENT_GRANT_TOKEN` | _(required)_ | Agreement grant token. |
 | `ECONOMIC_BASE_URL` | `https://restapi.e-conomic.com` | API base URL. |
 | `ECONOMIC_OPENAPI_SPEC` | _(unset)_ | Path or URL to an OpenAPI/Swagger spec. Enables `economic_describe_endpoint` and dynamic tools. |
-| `ECONOMIC_DYNAMIC_TOOLS` | `false` | Generate one tool per OpenAPI operation (requires a spec). |
+| `ECONOMIC_SCHEMA_DIR` | _(unset)_ | Directory of e-conomic's native per-endpoint JSON Schema files (alternative to a spec). |
+| `ECONOMIC_DYNAMIC_TOOLS` | `false` | Generate one tool per operation (requires a spec or schema dir). |
 | `ECONOMIC_DYNAMIC_TOOLS_LIMIT` | `200` | Max number of dynamic tools to generate. |
 | `ECONOMIC_PAGE_SIZE` | `100` | Default page size for collection reads (max 1000). |
 | `ECONOMIC_TIMEOUT_MS` | `30000` | Per-request timeout. |
@@ -131,12 +132,32 @@ e-conomic uses a compact filter syntax, e.g.:
 
 Sort by a field name; prefix with `-` for descending (e.g. `-customerNumber`).
 
-## Providing an OpenAPI spec
+## Providing a schema source
 
-The server works without a spec. To unlock `economic_describe_endpoint` and
-dynamic tools, point `ECONOMIC_OPENAPI_SPEC` at e-conomic's OpenAPI/Swagger
-file (downloadable from e-conomic's developer/API portal) — either a local path
-(e.g. `./spec/economic-openapi.json`) or a URL.
+The server works without any schema. To unlock `economic_describe_endpoint` and
+dynamic per-endpoint tools, give it one of:
+
+1. **OpenAPI/Swagger spec** — set `ECONOMIC_OPENAPI_SPEC` to a local path or URL.
+2. **e-conomic's native per-endpoint schemas** — e-conomic does **not** publish a
+   single OpenAPI document. Instead every operation has its own draft-03 JSON
+   Schema file whose name encodes the path and method, e.g.
+   `vat-zones.vatZoneNumber.get.schema.json` → `GET /vat-zones/{vatZoneNumber}`.
+   Point `ECONOMIC_SCHEMA_DIR` at a directory of these files.
+
+### Crawling the schema files
+
+Use the bundled crawler to download the schema files into `./spec/schemas`:
+
+```bash
+ECONOMIC_APP_SECRET_TOKEN=... ECONOMIC_AGREEMENT_GRANT_TOKEN=... \
+ECONOMIC_SCHEMA_BASE_URL=<base-url-of-schema-files> \
+node scripts/crawl-schemas.mjs
+```
+
+It discovers the top-level collections from the API's self-describing root and
+downloads the matching `*.schema.json` files (missing ones are skipped). You can
+also supply an explicit list via `ECONOMIC_SCHEMA_FILELIST`. Commit the result
+as `spec/schemas/` and set `ECONOMIC_SCHEMA_DIR=./spec/schemas`.
 
 ## Development
 

@@ -9,6 +9,7 @@
   },
   "files": [
     "dist",
+    "spec/schemas",
     "README.md",
     "LICENSE",
     ".env.example"

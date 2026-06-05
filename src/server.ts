@@ -4,6 +4,9 @@
  * list/call request handlers.
  */
 
+import { existsSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import {
   CallToolRequestSchema,
@@ -54,6 +57,20 @@ export async function buildServer(config: Config): Promise<BuiltServer> {
         `[e-conomic-mcp] Warning: failed to load schema directory ${config.schemaDir}: ` +
           `${err instanceof Error ? err.message : String(err)}. Continuing without it.`,
       );
+    }
+  } else {
+    // No schema source configured: fall back to schemas bundled with the
+    // package (spec/schemas at the package root), if present.
+    const bundled = bundledSchemaDir();
+    if (bundled) {
+      try {
+        spec = await SchemaDirSpec.load(bundled);
+        console.error(
+          `[e-conomic-mcp] Loaded ${spec.operations.length} operations from bundled schemas (${bundled}).`,
+        );
+      } catch {
+        // No bundled schemas — fine, generic tools still cover everything.
+      }
     }
   }
 
@@ -114,6 +131,16 @@ export async function buildServer(config: Config): Promise<BuiltServer> {
   });
 
   return { server, toolCount: toolMap.size, specLoaded: Boolean(spec) };
+}
+
+/** Locate schemas shipped inside the package (dist/../spec/schemas), if any. */
+function bundledSchemaDir(): string | undefined {
+  try {
+    const dir = fileURLToPath(new URL("../spec/schemas", import.meta.url));
+    return existsSync(dir) ? dir : undefined;
+  } catch {
+    return undefined;
+  }
 }
 
 function errorResult(message: string): CallToolResult {

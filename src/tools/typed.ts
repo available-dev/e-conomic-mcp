@@ -8,6 +8,7 @@
  */
 
 import type { EconomicClient } from "../economicClient.js";
+import { resolveUploadData } from "./generic.js";
 import type { ToolDefinition } from "./types.js";
 
 /** A read-only collection resource we expose list/get tools for. */
@@ -214,6 +215,156 @@ export function typedTools(client: EconomicClient): ToolDefinition[] {
       return res.data;
     },
   });
+
+  // Attachment upload tools. e-conomic exposes binary multipart/form-data
+  // endpoints that the JSON-only economic_request cannot reach, so these are
+  // first-class. The generic economic_upload_file covers any other endpoint.
+  const fileInputProps = {
+    filePath: {
+      type: "string",
+      description: "Absolute path to a local file to upload. Use this OR 'content'.",
+    },
+    content: {
+      type: "string",
+      description: "Base64-encoded file bytes, as an alternative to filePath. Requires 'fileName'.",
+    },
+    fileName: {
+      type: "string",
+      description:
+        "File name including extension (e.g. 'receipt.pdf'). Required with 'content'; " +
+        "defaults to the basename of filePath otherwise.",
+    },
+    contentType: {
+      type: "string",
+      description: "Optional explicit MIME type; inferred from the file name when omitted.",
+    },
+  };
+
+  tools.push({
+    name: "economic_upload_voucher_attachment",
+    description:
+      "Attach a document (receipt/bilag) to a journal voucher via e-conomic's multipart upload. " +
+      "Identify the voucher by journalNumber, accountingYear and voucherNumber. Supported " +
+      "formats: .pdf, .jpg, .jpeg, .gif, .png; max 9 MB. Set append=true to add pages to an " +
+      "existing attachment (PATCH) instead of creating a new one (POST).",
+    inputSchema: {
+      type: "object",
+      properties: {
+        journalNumber: { type: ["string", "integer"], description: "The journal number." },
+        accountingYear: {
+          type: "string",
+          description: "The accounting year, e.g. '2024' or '2024/2025'.",
+        },
+        voucherNumber: { type: ["string", "integer"], description: "The voucher number." },
+        append: {
+          type: "boolean",
+          description: "If true, append pages to the existing attachment (PATCH). Defaults to POST.",
+        },
+        ...fileInputProps,
+      },
+      required: ["journalNumber", "accountingYear", "voucherNumber"],
+      additionalProperties: false,
+    },
+    handler: async (args) => {
+      const { data, fileName } = await resolveUploadData(args);
+      const journal = encodeURIComponent(String(args.journalNumber));
+      const voucher = `${encodeURIComponent(String(args.accountingYear))}-${encodeURIComponent(String(args.voucherNumber))}`;
+      const res = await client.uploadFile({
+        method: args.append ? "PATCH" : "POST",
+        path: `journals/${journal}/vouchers/${voucher}/attachment/file`,
+        data,
+        fileName,
+        contentType: args.contentType as string | undefined,
+      });
+      return { status: res.status, data: res.data };
+    },
+  });
+
+  tools.push({
+    name: "economic_get_voucher_attachment",
+    description:
+      "Get attachment metadata for a journal voucher (number of pages, created date, file link). " +
+      "Identify the voucher by journalNumber, accountingYear and voucherNumber.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        journalNumber: { type: ["string", "integer"] },
+        accountingYear: { type: "string" },
+        voucherNumber: { type: ["string", "integer"] },
+      },
+      required: ["journalNumber", "accountingYear", "voucherNumber"],
+      additionalProperties: false,
+    },
+    handler: async (args) => {
+      const journal = encodeURIComponent(String(args.journalNumber));
+      const voucher = `${encodeURIComponent(String(args.accountingYear))}-${encodeURIComponent(String(args.voucherNumber))}`;
+      const res = await client.request({
+        method: "GET",
+        path: `journals/${journal}/vouchers/${voucher}/attachment`,
+      });
+      return res.data;
+    },
+  });
+
+  tools.push({
+    name: "economic_delete_voucher_attachment",
+    description:
+      "Remove the entire attachment associated with a journal voucher. Identify the voucher by " +
+      "journalNumber, accountingYear and voucherNumber.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        journalNumber: { type: ["string", "integer"] },
+        accountingYear: { type: "string" },
+        voucherNumber: { type: ["string", "integer"] },
+      },
+      required: ["journalNumber", "accountingYear", "voucherNumber"],
+      additionalProperties: false,
+    },
+    handler: async (args) => {
+      const journal = encodeURIComponent(String(args.journalNumber));
+      const voucher = `${encodeURIComponent(String(args.accountingYear))}-${encodeURIComponent(String(args.voucherNumber))}`;
+      const res = await client.request({
+        method: "DELETE",
+        path: `journals/${journal}/vouchers/${voucher}/attachment/file`,
+      });
+      return { status: res.status, data: res.data };
+    },
+  });
+
+  // Draft invoice/order/quote attachments accept PDF only.
+  for (const draft of [
+    { singular: "draft_invoice", path: "invoices/drafts", idHint: "draftInvoiceNumber" },
+    { singular: "draft_order", path: "orders/drafts", idHint: "orderNumber" },
+    { singular: "draft_quote", path: "quotes/drafts", idHint: "quoteNumber" },
+  ] as const) {
+    const label = draft.singular.replace(/_/g, " ");
+    tools.push({
+      name: `economic_upload_${draft.singular}_attachment`,
+      description:
+        `Attach a PDF document to a ${label} via e-conomic's multipart upload. Identify it by ` +
+        `'id' (the ${draft.idHint}). Only PDF files are supported; max 9 MB.`,
+      inputSchema: {
+        type: "object",
+        properties: {
+          id: { type: ["string", "integer"], description: `The ${draft.idHint}.` },
+          ...fileInputProps,
+        },
+        required: ["id"],
+        additionalProperties: false,
+      },
+      handler: async (args) => {
+        const { data, fileName } = await resolveUploadData(args);
+        const res = await client.uploadFile({
+          path: `${draft.path}/${encodeURIComponent(String(args.id))}/attachment/file`,
+          data,
+          fileName,
+          contentType: args.contentType as string | undefined,
+        });
+        return { status: res.status, data: res.data };
+      },
+    });
+  }
 
   return tools;
 }

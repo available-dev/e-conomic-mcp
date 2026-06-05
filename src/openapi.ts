@@ -34,6 +34,8 @@ export interface OperationInfo {
   parameters: ParameterInfo[];
   requestBodySchema?: JsonSchema;
   responseSchema?: JsonSchema;
+  /** True when the request body is `multipart/form-data` (a binary file upload). */
+  fileUpload?: boolean;
 }
 
 export interface ParameterInfo {
@@ -122,6 +124,7 @@ function extractOperations(raw: RawSpec, version: "2.0" | "3.x"): OperationInfo[
 
       const parameters: ParameterInfo[] = [];
       let requestBodySchema: JsonSchema | undefined;
+      let fileUpload = false;
 
       for (const p of rawParams) {
         if (version === "2.0" && p.in === "body") {
@@ -141,6 +144,7 @@ function extractOperations(raw: RawSpec, version: "2.0" | "3.x"): OperationInfo[
         const rb = resolveRef(op.requestBody, raw);
         const json = rb?.content?.["application/json"];
         if (json?.schema) requestBodySchema = resolveSchema(json.schema, raw);
+        if (rb?.content?.["multipart/form-data"]) fileUpload = true;
       }
 
       const responseSchema = extractResponseSchema(op, raw, version);
@@ -155,6 +159,7 @@ function extractOperations(raw: RawSpec, version: "2.0" | "3.x"): OperationInfo[
         parameters,
         requestBodySchema,
         responseSchema,
+        fileUpload,
       });
     }
   }

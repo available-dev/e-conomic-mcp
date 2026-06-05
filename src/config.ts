@@ -4,8 +4,10 @@
  * Auth model: e-conomic's REST API authenticates every request with a pair of
  * tokens sent as headers — the app secret token (identifies the integration)
  * and the agreement grant token (identifies the company/agreement that granted
- * access). We take both directly from the environment.
+ * access). Tokens come from the environment, or from locally stored credentials.
  */
+
+import { loadStoredCredentials } from "./credentials.js";
 
 export interface Config {
   baseUrl: string;
@@ -36,23 +38,33 @@ function parseBoolEnv(name: string, fallback: boolean): boolean {
 }
 
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
-  const appSecretToken = env.ECONOMIC_APP_SECRET_TOKEN?.trim() ?? "";
-  const agreementGrantToken = env.ECONOMIC_AGREEMENT_GRANT_TOKEN?.trim() ?? "";
+  // Environment variables take precedence; fall back to locally stored
+  // credentials (written by `e-conomic-mcp auth login` / `auth set`).
+  const stored = loadStoredCredentials(env);
+  const appSecretToken = env.ECONOMIC_APP_SECRET_TOKEN?.trim() || stored?.appSecretToken?.trim() || "";
+  const agreementGrantToken =
+    env.ECONOMIC_AGREEMENT_GRANT_TOKEN?.trim() || stored?.agreementGrantToken?.trim() || "";
 
-  const missing: string[] = [];
-  if (!appSecretToken) missing.push("ECONOMIC_APP_SECRET_TOKEN");
-  if (!agreementGrantToken) missing.push("ECONOMIC_AGREEMENT_GRANT_TOKEN");
-  if (missing.length > 0) {
+  if (!appSecretToken || !agreementGrantToken) {
+    const missing = [
+      !appSecretToken ? "app secret token" : null,
+      !agreementGrantToken ? "agreement grant token" : null,
+    ].filter(Boolean);
     throw new Error(
-      `Missing required environment variable(s): ${missing.join(", ")}. ` +
-        `See .env.example for details.`,
+      `Missing credentials: ${missing.join(" and ")}. Provide them via ` +
+        `ECONOMIC_APP_SECRET_TOKEN / ECONOMIC_AGREEMENT_GRANT_TOKEN, or run ` +
+        `\`e-conomic-mcp auth login\` to store them locally.`,
     );
   }
 
   const pageSize = Math.min(parseIntEnv("ECONOMIC_PAGE_SIZE", 100), 1000);
 
   return {
-    baseUrl: (env.ECONOMIC_BASE_URL?.trim() || "https://restapi.e-conomic.com").replace(/\/+$/, ""),
+    baseUrl: (
+      env.ECONOMIC_BASE_URL?.trim() ||
+      stored?.baseUrl?.trim() ||
+      "https://restapi.e-conomic.com"
+    ).replace(/\/+$/, ""),
     appSecretToken,
     agreementGrantToken,
     openapiSpec: env.ECONOMIC_OPENAPI_SPEC?.trim() || undefined,

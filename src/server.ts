@@ -59,17 +59,17 @@ export async function buildServer(config: Config): Promise<BuiltServer> {
       );
     }
   } else {
-    // No schema source configured: fall back to schemas bundled with the
-    // package (spec/schemas at the package root), if present.
-    const bundled = bundledSchemaDir();
+    // No schema source configured: fall back to the OpenAPI spec bundled with
+    // the package (spec/economic-openapi.json at the package root), if present.
+    const bundled = bundledOpenApiPath();
     if (bundled) {
       try {
-        spec = await SchemaDirSpec.load(bundled);
+        spec = await OpenApiSpec.load(bundled);
         console.error(
-          `[e-conomic-mcp] Loaded ${spec.operations.length} operations from bundled schemas (${bundled}).`,
+          `[e-conomic-mcp] Loaded ${spec.operations.length} operations from bundled spec.`,
         );
       } catch {
-        // No bundled schemas — fine, generic tools still cover everything.
+        // No bundled spec — fine, generic tools still cover everything.
       }
     }
   }
@@ -133,11 +133,11 @@ export async function buildServer(config: Config): Promise<BuiltServer> {
   return { server, toolCount: toolMap.size, specLoaded: Boolean(spec) };
 }
 
-/** Locate schemas shipped inside the package (dist/../spec/schemas), if any. */
-function bundledSchemaDir(): string | undefined {
+/** Locate the OpenAPI spec shipped inside the package, if any. */
+function bundledOpenApiPath(): string | undefined {
   try {
-    const dir = fileURLToPath(new URL("../spec/schemas", import.meta.url));
-    return existsSync(dir) ? dir : undefined;
+    const file = fileURLToPath(new URL("../spec/economic-openapi.json", import.meta.url));
+    return existsSync(file) ? file : undefined;
   } catch {
     return undefined;
   }

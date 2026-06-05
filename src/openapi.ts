@@ -33,6 +33,7 @@ export interface OperationInfo {
   tags: string[];
   parameters: ParameterInfo[];
   requestBodySchema?: JsonSchema;
+  responseSchema?: JsonSchema;
 }
 
 export interface ParameterInfo {
@@ -142,6 +143,8 @@ function extractOperations(raw: RawSpec, version: "2.0" | "3.x"): OperationInfo[
         if (json?.schema) requestBodySchema = resolveSchema(json.schema, raw);
       }
 
+      const responseSchema = extractResponseSchema(op, raw, version);
+
       operations.push({
         operationId: op.operationId || synthesizeOperationId(method, path),
         method: method.toUpperCase(),
@@ -151,11 +154,29 @@ function extractOperations(raw: RawSpec, version: "2.0" | "3.x"): OperationInfo[
         tags: Array.isArray(op.tags) ? op.tags : [],
         parameters,
         requestBodySchema,
+        responseSchema,
       });
     }
   }
 
   return operations;
+}
+
+/** Pull the success (2xx) response body schema, if present. */
+function extractResponseSchema(op: any, raw: RawSpec, version: "2.0" | "3.x"): JsonSchema | undefined {
+  const responses = op.responses;
+  if (!responses || typeof responses !== "object") return undefined;
+  const status =
+    ["200", "201", "default"].find((s) => responses[s] !== undefined) ??
+    Object.keys(responses).find((s) => s.startsWith("2"));
+  if (!status) return undefined;
+  const resp = resolveRef(responses[status], raw);
+  if (!resp) return undefined;
+  if (version === "2.0") {
+    return resp.schema ? resolveSchema(resp.schema, raw) : undefined;
+  }
+  const json = resp.content?.["application/json"];
+  return json?.schema ? resolveSchema(json.schema, raw) : undefined;
 }
 
 function swagger2ParamSchema(p: any): JsonSchema {

@@ -3,45 +3,52 @@
  *
  * Commands:
  *   serve (default)   Start the MCP server over stdio.
- *   crawl-schemas     Download e-conomic's per-endpoint JSON schema files.
+ *   auth <sub>        Manage locally stored credentials (login/set/status/logout).
  *   doctor            Verify credentials and API connectivity.
  *
  * Global flags: --help/-h, --version/-v
  */
 
 import { readFile } from "node:fs/promises";
+import { createInterface } from "node:readline/promises";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 
 import { loadConfig } from "./config.js";
 import { buildServer } from "./server.js";
-import { crawlSchemas, extractSchemaList } from "./crawl.js";
+import {
+  clearCredentials,
+  credentialsPath,
+  loadStoredCredentials,
+  maskSecret,
+  saveCredentials,
+} from "./credentials.js";
 
 const HELP = `e-conomic-mcp — MCP server for the e-conomic REST API
 
 Usage:
-  e-conomic-mcp [serve]                 Start the MCP server over stdio (default)
-  e-conomic-mcp crawl-schemas [outDir]  Download e-conomic JSON schema files
-  e-conomic-mcp extract-schema-list <restdocs.html> [out.txt]
-                                        Extract the schema filename list from the
-                                        restdocs HTML page
-  e-conomic-mcp doctor                  Check credentials and API connectivity
+  e-conomic-mcp [serve]            Start the MCP server over stdio (default)
+  e-conomic-mcp auth login         Interactively store credentials locally
+  e-conomic-mcp auth set [flags]   Store credentials non-interactively
+  e-conomic-mcp auth status        Show where credentials are coming from
+  e-conomic-mcp auth logout        Remove locally stored credentials
+  e-conomic-mcp doctor             Check credentials and API connectivity
 
 Options:
   -h, --help        Show this help
   -v, --version     Show version
 
-Environment (see .env.example for the full list):
-  ECONOMIC_APP_SECRET_TOKEN        (required) app secret token
-  ECONOMIC_AGREEMENT_GRANT_TOKEN   (required) agreement grant token
-  ECONOMIC_BASE_URL                API base URL (default https://restapi.e-conomic.com)
-  ECONOMIC_SCHEMA_DIR              directory of downloaded *.schema.json files
-  ECONOMIC_OPENAPI_SPEC            path/URL to an OpenAPI spec (alternative)
-  ECONOMIC_DYNAMIC_TOOLS           "true" to generate one tool per operation
+auth set flags:
+  --app-secret <token>        app secret token
+  --agreement-grant <token>   agreement grant token
+  --base-url <url>            override API base URL
 
-crawl-schemas flags:
-  --out <dir>            output directory (default ./spec/schemas)
-  --schema-base <url>    schema host base (default <ECONOMIC_BASE_URL>/schema)
-  --file-list <path>     newline-separated list of filenames to fetch
+Credentials resolve from environment variables first, then the local store
+(${credentialsPathSafe()}):
+  ECONOMIC_APP_SECRET_TOKEN, ECONOMIC_AGREEMENT_GRANT_TOKEN, ECONOMIC_BASE_URL
+
+Other environment (see .env.example):
+  ECONOMIC_OPENAPI_SPEC, ECONOMIC_SCHEMA_DIR, ECONOMIC_DYNAMIC_TOOLS,
+  ECONOMIC_DYNAMIC_TOOLS_LIMIT, ECONOMIC_PAGE_SIZE, ECONOMIC_TIMEOUT_MS
 `;
 
 export async function runCli(argv: string[]): Promise<void> {
@@ -62,11 +69,8 @@ export async function runCli(argv: string[]): Promise<void> {
     case "serve":
       await serve();
       return;
-    case "crawl-schemas":
-      await runCrawl(args.slice(1));
-      return;
-    case "extract-schema-list":
-      await runExtract(args.slice(1));
+    case "auth":
+      await auth(args.slice(1));
       return;
     case "doctor":
       await doctor();
@@ -90,51 +94,94 @@ async function serve(): Promise<void> {
   );
 }
 
-async function runCrawl(rest: string[]): Promise<void> {
-  const flags = parseFlags(rest);
-  const apiBaseUrl = (process.env.ECONOMIC_BASE_URL?.trim() || "https://restapi.e-conomic.com").replace(
-    /\/+$/,
-    "",
-  );
-  const outDir = flags.positional[0] || flags.out || "./spec/schemas";
-
-  const result = await crawlSchemas({
-    outDir,
-    apiBaseUrl,
-    schemaBaseUrl: flags["schema-base"],
-    fileListPath: flags["file-list"],
-    appSecretToken: process.env.ECONOMIC_APP_SECRET_TOKEN?.trim(),
-    agreementGrantToken: process.env.ECONOMIC_AGREEMENT_GRANT_TOKEN?.trim(),
-  });
-
-  if (result.downloaded === 0) {
-    process.stderr.write(
-      "Nothing downloaded — check the schema base URL and credentials.\n",
-    );
-    process.exitCode = 2;
+async function auth(rest: string[]): Promise<void> {
+  const sub = rest[0] ?? "status";
+  switch (sub) {
+    case "login":
+      await authLogin();
+      return;
+    case "set":
+      authSet(rest.slice(1));
+      return;
+    case "status":
+      authStatus();
+      return;
+    case "logout":
+      authLogout();
+      return;
+    default:
+      process.stderr.write(`Unknown auth subcommand: ${sub}\n\n${HELP}`);
+      process.exitCode = 1;
   }
 }
 
-async function runExtract(rest: string[]): Promise<void> {
-  const positional = rest.filter((a) => !a.startsWith("-"));
-  const htmlPath = positional[0];
-  if (!htmlPath) {
-    process.stderr.write("Usage: e-conomic-mcp extract-schema-list <restdocs.html> [out.txt]\n");
+async function authLogin(): Promise<void> {
+  const rl = createInterface({ input: process.stdin, output: process.stderr });
+  try {
+    process.stderr.write("Enter your e-conomic credentials (stored locally, never transmitted except to the API).\n");
+    const appSecretToken = (await rl.question("App secret token: ")).trim();
+    const agreementGrantToken = (await rl.question("Agreement grant token: ")).trim();
+    const baseUrl = (await rl.question("Base URL [https://restapi.e-conomic.com]: ")).trim();
+
+    if (!appSecretToken || !agreementGrantToken) {
+      process.stderr.write("Both tokens are required. Aborted.\n");
+      process.exitCode = 1;
+      return;
+    }
+    const path = saveCredentials({
+      appSecretToken,
+      agreementGrantToken,
+      baseUrl: baseUrl || undefined,
+    });
+    process.stderr.write(`✓ Saved credentials to ${path}\n`);
+  } finally {
+    rl.close();
+  }
+}
+
+function authSet(rest: string[]): void {
+  const flags = parseFlags(rest);
+  const update = {
+    appSecretToken: flags["app-secret"],
+    agreementGrantToken: flags["agreement-grant"],
+    baseUrl: flags["base-url"],
+  };
+  if (!update.appSecretToken && !update.agreementGrantToken && !update.baseUrl) {
+    process.stderr.write(
+      "Provide at least one of --app-secret, --agreement-grant, --base-url.\n",
+    );
     process.exitCode = 1;
     return;
   }
-  const outPath = positional[1];
-  const html = await readFile(htmlPath, "utf8");
-  const names = extractSchemaList(html);
-  const text = names.join("\n") + "\n";
-  if (outPath) {
-    const { writeFile } = await import("node:fs/promises");
-    await writeFile(outPath, text, "utf8");
-    process.stderr.write(`Extracted ${names.length} schema filenames to ${outPath}\n`);
-  } else {
-    process.stdout.write(text);
-    process.stderr.write(`\nExtracted ${names.length} schema filenames.\n`);
+  const path = saveCredentials(update);
+  process.stderr.write(`✓ Saved credentials to ${path}\n`);
+}
+
+function authStatus(): void {
+  const stored = loadStoredCredentials();
+  const envSecret = process.env.ECONOMIC_APP_SECRET_TOKEN?.trim();
+  const envGrant = process.env.ECONOMIC_AGREEMENT_GRANT_TOKEN?.trim();
+
+  const secretSrc = envSecret ? "env" : stored?.appSecretToken ? "store" : "none";
+  const grantSrc = envGrant ? "env" : stored?.agreementGrantToken ? "store" : "none";
+
+  process.stderr.write(`Credential store: ${credentialsPath()}\n`);
+  process.stderr.write(
+    `App secret token:      ${maskSecret(envSecret || stored?.appSecretToken)} [${secretSrc}]\n`,
+  );
+  process.stderr.write(
+    `Agreement grant token: ${maskSecret(envGrant || stored?.agreementGrantToken)} [${grantSrc}]\n`,
+  );
+  if (secretSrc === "none" || grantSrc === "none") {
+    process.stderr.write("\nNot fully configured. Run `e-conomic-mcp auth login`.\n");
   }
+}
+
+function authLogout(): void {
+  const removed = clearCredentials();
+  process.stderr.write(
+    removed ? "✓ Removed locally stored credentials.\n" : "No stored credentials to remove.\n",
+  );
 }
 
 async function doctor(): Promise<void> {
@@ -167,21 +214,29 @@ async function doctor(): Promise<void> {
 
 interface ParsedFlags {
   positional: string[];
-  out?: string;
-  "schema-base"?: string;
-  "file-list"?: string;
+  "app-secret"?: string;
+  "agreement-grant"?: string;
+  "base-url"?: string;
 }
 
 function parseFlags(args: string[]): ParsedFlags {
   const flags: ParsedFlags = { positional: [] };
   for (let i = 0; i < args.length; i++) {
     const arg = args[i]!;
-    if (arg === "--out") flags.out = args[++i];
-    else if (arg === "--schema-base") flags["schema-base"] = args[++i];
-    else if (arg === "--file-list") flags["file-list"] = args[++i];
+    if (arg === "--app-secret") flags["app-secret"] = args[++i];
+    else if (arg === "--agreement-grant") flags["agreement-grant"] = args[++i];
+    else if (arg === "--base-url") flags["base-url"] = args[++i];
     else if (!arg.startsWith("-")) flags.positional.push(arg);
   }
   return flags;
+}
+
+function credentialsPathSafe(): string {
+  try {
+    return credentialsPath();
+  } catch {
+    return "~/.config/e-conomic-mcp/credentials.json";
+  }
 }
 
 async function readVersion(): Promise<string> {

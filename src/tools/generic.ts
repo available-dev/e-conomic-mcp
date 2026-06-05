@@ -184,6 +184,7 @@ export function genericTools(
           tags: op.tags,
           parameters: op.parameters,
           requestBodySchema: op.requestBodySchema,
+          responseSchema: op.responseSchema,
         };
       },
     });

@@ -54,9 +54,12 @@ npm link               # optional: expose the `e-conomic-mcp` command globally
 ## CLI
 
 ```text
-e-conomic-mcp [serve]                 Start the MCP server over stdio (default)
-e-conomic-mcp crawl-schemas [outDir]  Download e-conomic JSON schema files
-e-conomic-mcp doctor                  Check credentials and API connectivity
+e-conomic-mcp [serve]            Start the MCP server over stdio (default)
+e-conomic-mcp auth login         Interactively store credentials locally
+e-conomic-mcp auth set [flags]   Store credentials non-interactively
+e-conomic-mcp auth status        Show where credentials are coming from
+e-conomic-mcp auth logout        Remove locally stored credentials
+e-conomic-mcp doctor             Check credentials and API connectivity
 e-conomic-mcp --help | --version
 ```
 
@@ -69,15 +72,43 @@ e-conomic authenticates every REST call with two tokens, sent as headers:
 | `X-AppSecretToken` | `ECONOMIC_APP_SECRET_TOKEN` | Identifies your integration/app. From the e-conomic developer portal. |
 | `X-AgreementGrantToken` | `ECONOMIC_AGREEMENT_GRANT_TOKEN` | Identifies the company/agreement that granted your app access. |
 
-Copy `.env.example` to `.env` and fill both in (or set them in your MCP client
-config). For experimentation, e-conomic publishes demo tokens in their docs.
+You can provide them two ways (environment variables always take precedence):
+
+1. **Store them locally** with the CLI (recommended for desktop use):
+
+   ```bash
+   e-conomic-mcp auth login                     # interactive prompt
+   # or non-interactively:
+   e-conomic-mcp auth set --app-secret <token> --agreement-grant <token>
+   ```
+
+   Credentials are written to `~/.config/e-conomic-mcp/credentials.json`
+   (override with `$ECONOMIC_CONFIG_DIR` / `$XDG_CONFIG_HOME`) with `0600`
+   permissions. Check with `e-conomic-mcp auth status`; remove with
+   `e-conomic-mcp auth logout`.
+
+2. **Environment variables** — set `ECONOMIC_APP_SECRET_TOKEN` and
+   `ECONOMIC_AGREEMENT_GRANT_TOKEN` (e.g. in your MCP client config, or via
+   `.env`).
+
+> OAuth support is planned; the credential store format is forward-compatible
+> with it.
 
 ## Usage
 
 ### With Claude Desktop / Claude Code
 
-Add to your MCP client config (e.g. `claude_desktop_config.json`). With the CLI
-installed, just reference the command:
+If you ran `e-conomic-mcp auth login`, the MCP config is just:
+
+```json
+{
+  "mcpServers": {
+    "e-conomic": { "command": "e-conomic-mcp" }
+  }
+}
+```
+
+Otherwise pass the tokens via `env`:
 
 ```json
 {
@@ -112,9 +143,9 @@ credentials and connectivity first.
 | `ECONOMIC_APP_SECRET_TOKEN` | _(required)_ | App secret token. |
 | `ECONOMIC_AGREEMENT_GRANT_TOKEN` | _(required)_ | Agreement grant token. |
 | `ECONOMIC_BASE_URL` | `https://restapi.e-conomic.com` | API base URL. |
-| `ECONOMIC_OPENAPI_SPEC` | _(unset)_ | Path or URL to an OpenAPI/Swagger spec. Enables `economic_describe_endpoint` and dynamic tools. |
-| `ECONOMIC_SCHEMA_DIR` | _(unset)_ | Directory of e-conomic's native per-endpoint JSON Schema files (alternative to a spec). |
-| `ECONOMIC_DYNAMIC_TOOLS` | `false` | Generate one tool per operation (requires a spec or schema dir). |
+| `ECONOMIC_OPENAPI_SPEC` | _(bundled)_ | Override the bundled OpenAPI spec with a path/URL. |
+| `ECONOMIC_SCHEMA_DIR` | _(unset)_ | Use a directory of e-conomic's native per-endpoint JSON schema files instead of the bundled spec. |
+| `ECONOMIC_DYNAMIC_TOOLS` | `false` | Generate one tool per operation from the spec. |
 | `ECONOMIC_DYNAMIC_TOOLS_LIMIT` | `200` | Max number of dynamic tools to generate. |
 | `ECONOMIC_PAGE_SIZE` | `100` | Default page size for collection reads (max 1000). |
 | `ECONOMIC_TIMEOUT_MS` | `30000` | Per-request timeout. |
@@ -128,8 +159,8 @@ credentials and connectivity first.
   the API's self-describing root).
 - **`economic_get_collection`** — fetch a collection with `filter`, `sort`,
   `pageSize`, `maxItems`, `fetchAll`.
-- **`economic_describe_endpoint`** — _(spec only)_ show an endpoint's parameters
-  and request-body schema.
+- **`economic_describe_endpoint`** — show an endpoint's parameters, request-body
+  and response schema (from the bundled OpenAPI spec).
 
 ### Typed convenience tools
 
@@ -143,9 +174,9 @@ Writes: `economic_create_customer`, `economic_update_customer`,
 
 ### Dynamic per-endpoint tools
 
-When `ECONOMIC_DYNAMIC_TOOLS=true` and a spec is configured, every operation in
-the spec is exposed as an `economic_op_<operationId>` tool with a generated
-input schema.
+When `ECONOMIC_DYNAMIC_TOOLS=true`, every operation in the spec is exposed as an
+`economic_op_<operationId>` tool with a generated input schema (160 operations;
+bounded by `ECONOMIC_DYNAMIC_TOOLS_LIMIT`).
 
 ## Filtering & sorting
 
@@ -157,50 +188,17 @@ e-conomic uses a compact filter syntax, e.g.:
 
 Sort by a field name; prefix with `-` for descending (e.g. `-customerNumber`).
 
-## Providing a schema source
+## Bundled API spec
 
-The server works without any schema. To unlock `economic_describe_endpoint` and
-dynamic per-endpoint tools, give it one of:
+The package ships with [`spec/economic-openapi.json`](./spec/economic-openapi.json)
+— an OpenAPI 3 description of all **160 e-conomic endpoints** (paths, methods,
+and request/response schemas), generated from e-conomic's published per-endpoint
+JSON schemas. It loads automatically and powers `economic_describe_endpoint` and
+dynamic per-endpoint tools with zero configuration.
 
-1. **OpenAPI/Swagger spec** — set `ECONOMIC_OPENAPI_SPEC` to a local path or URL.
-2. **e-conomic's native per-endpoint schemas** — e-conomic does **not** publish a
-   single OpenAPI document. Instead every operation has its own draft-03 JSON
-   Schema file whose name encodes the path and method, e.g.
-   `vat-zones.vatZoneNumber.get.schema.json` → `GET /vat-zones/{vatZoneNumber}`.
-   Point `ECONOMIC_SCHEMA_DIR` at a directory of these files.
-
-e-conomic serves these files at `https://restapi.e-conomic.com/schema/`.
-
-### Crawling the schema files
-
-Use the bundled crawler to download the schema files into `./spec/schemas`:
-
-```bash
-ECONOMIC_APP_SECRET_TOKEN=... ECONOMIC_AGREEMENT_GRANT_TOKEN=... \
-e-conomic-mcp crawl-schemas
-```
-
-It discovers the top-level collections from the API's self-describing root and
-downloads the matching `*.schema.json` files from `<base>/schema` (missing ones
-are skipped — there is no master index of all schemas).
-
-**For exhaustive coverage**, this repo ships the complete, authoritative list of
-all 160 schema filenames in [`spec/schema-files.txt`](./spec/schema-files.txt),
-extracted from e-conomic's restdocs page. Download them all with:
-
-```bash
-e-conomic-mcp crawl-schemas --file-list spec/schema-files.txt --out spec/schemas
-```
-
-Then set `ECONOMIC_SCHEMA_DIR=./spec/schemas`.
-
-The list was generated from the docs HTML with:
-
-```bash
-e-conomic-mcp extract-schema-list spec/restdocs.html spec/schema-files.txt
-```
-
-Flags: `--out <dir>`, `--schema-base <url>`, `--file-list <path>`.
+To override it, set `ECONOMIC_OPENAPI_SPEC` to your own spec path/URL, or
+`ECONOMIC_SCHEMA_DIR` to a directory of e-conomic's native `*.schema.json` files
+(served at `https://restapi.e-conomic.com/schema/`).
 
 ## Development
 

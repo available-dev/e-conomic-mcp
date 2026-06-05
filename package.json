@@ -1,0 +1,58 @@
+{
+  "name": "@available/e-conomic-mcp",
+  "version": "0.1.0",
+  "description": "Model Context Protocol (MCP) server and CLI for the e-conomic REST API. Full API coverage via a generic request tool, schema-driven discovery, optional per-endpoint tool generation, and typed convenience tools.",
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "e-conomic-mcp": "dist/index.js"
+  },
+  "files": [
+    "dist",
+    "spec/economic-openapi.json",
+    "README.md",
+    "LICENSE",
+    ".env.example"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/available-dev/e-conomic-mcp.git"
+  },
+  "homepage": "https://github.com/available-dev/e-conomic-mcp#readme",
+  "bugs": {
+    "url": "https://github.com/available-dev/e-conomic-mcp/issues"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "watch": "tsc -p tsconfig.json --watch",
+    "start": "node dist/index.js",
+    "doctor": "node dist/index.js doctor",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "clean": "rm -rf dist",
+    "prepare": "npm run build",
+    "prepublishOnly": "npm run clean && npm run build"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "e-conomic",
+    "economic",
+    "visma",
+    "accounting",
+    "rest-api",
+    "claude"
+  ],
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "typescript": "^5.7.0"
+  }
+}

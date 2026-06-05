@@ -23,6 +23,20 @@ import type { ApiSpec, JsonSchema, OperationInfo, ParameterInfo } from "./openap
 
 const HTTP_METHODS = new Set(["get", "post", "put", "patch", "delete"]);
 
+/**
+ * Parse JSON, tolerating trailing commas — some of e-conomic's own schema files
+ * contain them (invalid strict JSON). Strict parse is tried first so valid files
+ * are untouched.
+ */
+export function parseLenientJson(text: string): JsonSchema {
+  try {
+    return JSON.parse(text) as JsonSchema;
+  } catch {
+    // Strip commas that directly precede a closing brace/bracket.
+    return JSON.parse(text.replace(/,(\s*[}\]])/g, "$1")) as JsonSchema;
+  }
+}
+
 export class SchemaDirSpec implements ApiSpec {
   readonly version = "e-conomic-schemas";
 
@@ -37,7 +51,7 @@ export class SchemaDirSpec implements ApiSpec {
       if (!parsed) continue;
       let schema: JsonSchema;
       try {
-        schema = JSON.parse(await readFile(file.fullPath, "utf8")) as JsonSchema;
+        schema = parseLenientJson(await readFile(file.fullPath, "utf8"));
       } catch {
         continue; // skip unparseable files rather than failing the whole load
       }

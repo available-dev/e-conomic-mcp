@@ -14,13 +14,15 @@ import {
   type CallToolResult,
 } from "@modelcontextprotocol/sdk/types.js";
 
-import type { Config } from "./config.js";
-import { EconomicClient, EconomicApiError } from "./economicClient.js";
+import type { ProfileRegistry } from "./config.js";
+import { ClientRegistry } from "./clientRegistry.js";
+import { EconomicApiError } from "./economicClient.js";
 import type { ApiSpec } from "./openapi.js";
 import { OpenApiSpec } from "./openapi.js";
 import { genericTools } from "./tools/generic.js";
 import { typedTools } from "./tools/typed.js";
 import { dynamicTools } from "./tools/dynamic.js";
+import { profileTools } from "./tools/profiles.js";
 import type { ToolDefinition } from "./tools/types.js";
 
 export interface BuiltServer {
@@ -29,19 +31,20 @@ export interface BuiltServer {
   specLoaded: boolean;
 }
 
-export async function buildServer(config: Config): Promise<BuiltServer> {
-  const client = new EconomicClient(config);
+export async function buildServer(registry: ProfileRegistry): Promise<BuiltServer> {
+  const clients = new ClientRegistry(registry);
+  const settings = registry.settings;
 
   let spec: ApiSpec | undefined;
-  if (config.openapiSpec) {
+  if (settings.openapiSpec) {
     try {
-      spec = await OpenApiSpec.load(config.openapiSpec);
+      spec = await OpenApiSpec.load(settings.openapiSpec);
       console.error(
-        `[e-conomic-mcp] Loaded OpenAPI spec (${spec.version}) with ${spec.operations.length} operations from ${config.openapiSpec}`,
+        `[e-conomic-mcp] Loaded OpenAPI spec (${spec.version}) with ${spec.operations.length} operations from ${settings.openapiSpec}`,
       );
     } catch (err) {
       console.error(
-        `[e-conomic-mcp] Warning: failed to load OpenAPI spec from ${config.openapiSpec}: ` +
+        `[e-conomic-mcp] Warning: failed to load OpenAPI spec from ${settings.openapiSpec}: ` +
           `${err instanceof Error ? err.message : String(err)}. Continuing without it.`,
       );
     }
@@ -62,16 +65,17 @@ export async function buildServer(config: Config): Promise<BuiltServer> {
   }
 
   const tools: ToolDefinition[] = [
-    ...genericTools(client, spec),
-    ...typedTools(client),
+    ...profileTools(clients),
+    ...genericTools(clients, spec),
+    ...typedTools(clients),
   ];
 
-  if (config.dynamicTools) {
+  if (settings.dynamicTools) {
     if (spec) {
-      const generated = dynamicTools(client, spec, config.dynamicToolsLimit);
+      const generated = dynamicTools(clients, spec, settings.dynamicToolsLimit);
       tools.push(...generated);
       console.error(
-        `[e-conomic-mcp] Generated ${generated.length} per-endpoint tools (limit ${config.dynamicToolsLimit}).`,
+        `[e-conomic-mcp] Generated ${generated.length} per-endpoint tools (limit ${settings.dynamicToolsLimit}).`,
       );
     } else {
       console.error(

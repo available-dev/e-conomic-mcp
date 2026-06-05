@@ -7,9 +7,9 @@
  * generic tools remain available for everything else.
  */
 
-import type { EconomicClient } from "../economicClient.js";
+import type { ClientRegistry } from "../clientRegistry.js";
 import { resolveUploadData } from "./generic.js";
-import type { ToolDefinition } from "./types.js";
+import { withProfile, type ToolDefinition } from "./types.js";
 
 /** A read-only collection resource we expose list/get tools for. */
 interface ResourceDef {
@@ -45,7 +45,7 @@ const READ_RESOURCES: ResourceDef[] = [
   { singular: "employee", path: "employees", label: "employees", byId: true },
 ];
 
-export function typedTools(client: EconomicClient): ToolDefinition[] {
+export function typedTools(clients: ClientRegistry): ToolDefinition[] {
   const tools: ToolDefinition[] = [];
 
   for (const res of READ_RESOURCES) {
@@ -56,17 +56,17 @@ export function typedTools(client: EconomicClient): ToolDefinition[] {
         `Filter syntax example: "name$like:Acme"; sort example: "-${idHint(res)}".`,
       inputSchema: {
         type: "object",
-        properties: {
+        properties: withProfile({
           filter: { type: "string", description: "e-conomic filter expression." },
           sort: { type: "string", description: "Sort field; prefix '-' for descending." },
           pageSize: { type: "integer", minimum: 1, maximum: 1000 },
           maxItems: { type: "integer", minimum: 1 },
           fetchAll: { type: "boolean" },
-        },
+        }),
         additionalProperties: false,
       },
       handler: async (args) => {
-        const result = await client.collection(res.path, {
+        const result = await clients.resolve(args.profile).collection(res.path, {
           filter: args.filter,
           sort: args.sort,
           pageSize: args.pageSize,
@@ -88,17 +88,17 @@ export function typedTools(client: EconomicClient): ToolDefinition[] {
         description: `Get a single e-conomic ${res.singular.replace(/_/g, " ")} by its id/number.`,
         inputSchema: {
           type: "object",
-          properties: {
+          properties: withProfile({
             id: {
               type: ["string", "integer"],
               description: `The ${res.singular.replace(/_/g, " ")} id (e.g. customerNumber).`,
             },
-          },
+          }),
           required: ["id"],
           additionalProperties: false,
         },
         handler: async (args) => {
-          const res2 = await client.request({
+          const res2 = await clients.resolve(args.profile).request({
             method: "GET",
             path: `${res.path}/${encodeURIComponent(String(args.id))}`,
           });
@@ -118,7 +118,7 @@ export function typedTools(client: EconomicClient): ToolDefinition[] {
       "to find valid references first.",
     inputSchema: {
       type: "object",
-      properties: {
+      properties: withProfile({
         customer: {
           type: "object",
           additionalProperties: true,
@@ -126,12 +126,14 @@ export function typedTools(client: EconomicClient): ToolDefinition[] {
             "Customer payload, e.g. { name, currency, customerGroup:{customerGroupNumber}, " +
             "paymentTerms:{paymentTermsNumber}, vatZone:{vatZoneNumber} }.",
         },
-      },
+      }),
       required: ["customer"],
       additionalProperties: false,
     },
     handler: async (args) => {
-      const res = await client.request({ method: "POST", path: "customers", body: args.customer });
+      const res = await clients
+        .resolve(args.profile)
+        .request({ method: "POST", path: "customers", body: args.customer });
       return res.data;
     },
   });
@@ -143,15 +145,15 @@ export function typedTools(client: EconomicClient): ToolDefinition[] {
       "customer object as 'customer' (e-conomic PUT replaces the resource).",
     inputSchema: {
       type: "object",
-      properties: {
+      properties: withProfile({
         id: { type: ["string", "integer"], description: "customerNumber." },
         customer: { type: "object", additionalProperties: true },
-      },
+      }),
       required: ["id", "customer"],
       additionalProperties: false,
     },
     handler: async (args) => {
-      const res = await client.request({
+      const res = await clients.resolve(args.profile).request({
         method: "PUT",
         path: `customers/${encodeURIComponent(String(args.id))}`,
         body: args.customer,
@@ -169,18 +171,18 @@ export function typedTools(client: EconomicClient): ToolDefinition[] {
       "existing draft with economic_get_draft_invoice to see the expected shape.",
     inputSchema: {
       type: "object",
-      properties: {
+      properties: withProfile({
         invoice: {
           type: "object",
           additionalProperties: true,
           description: "Draft invoice payload.",
         },
-      },
+      }),
       required: ["invoice"],
       additionalProperties: false,
     },
     handler: async (args) => {
-      const res = await client.request({
+      const res = await clients.resolve(args.profile).request({
         method: "POST",
         path: "invoices/drafts",
         body: args.invoice,
@@ -196,13 +198,13 @@ export function typedTools(client: EconomicClient): ToolDefinition[] {
       "invoice number as 'draftInvoiceNumber'. Optionally provide a specific invoice 'number'.",
     inputSchema: {
       type: "object",
-      properties: {
+      properties: withProfile({
         draftInvoiceNumber: { type: ["string", "integer"] },
         number: {
           type: "integer",
           description: "Optional explicit invoice number to assign when booking.",
         },
-      },
+      }),
       required: ["draftInvoiceNumber"],
       additionalProperties: false,
     },
@@ -211,7 +213,9 @@ export function typedTools(client: EconomicClient): ToolDefinition[] {
         draftInvoice: { draftInvoiceNumber: Number(args.draftInvoiceNumber) },
       };
       if (args.number !== undefined) body.number = Number(args.number);
-      const res = await client.request({ method: "POST", path: "invoices/booked", body });
+      const res = await clients
+        .resolve(args.profile)
+        .request({ method: "POST", path: "invoices/booked", body });
       return res.data;
     },
   });
@@ -249,7 +253,7 @@ export function typedTools(client: EconomicClient): ToolDefinition[] {
       "existing attachment (PATCH) instead of creating a new one (POST).",
     inputSchema: {
       type: "object",
-      properties: {
+      properties: withProfile({
         journalNumber: { type: ["string", "integer"], description: "The journal number." },
         accountingYear: {
           type: "string",
@@ -261,7 +265,7 @@ export function typedTools(client: EconomicClient): ToolDefinition[] {
           description: "If true, append pages to the existing attachment (PATCH). Defaults to POST.",
         },
         ...fileInputProps,
-      },
+      }),
       required: ["journalNumber", "accountingYear", "voucherNumber"],
       additionalProperties: false,
     },
@@ -269,7 +273,7 @@ export function typedTools(client: EconomicClient): ToolDefinition[] {
       const { data, fileName } = await resolveUploadData(args);
       const journal = encodeURIComponent(String(args.journalNumber));
       const voucher = `${encodeURIComponent(String(args.accountingYear))}-${encodeURIComponent(String(args.voucherNumber))}`;
-      const res = await client.uploadFile({
+      const res = await clients.resolve(args.profile).uploadFile({
         method: args.append ? "PATCH" : "POST",
         path: `journals/${journal}/vouchers/${voucher}/attachment/file`,
         data,
@@ -287,18 +291,18 @@ export function typedTools(client: EconomicClient): ToolDefinition[] {
       "Identify the voucher by journalNumber, accountingYear and voucherNumber.",
     inputSchema: {
       type: "object",
-      properties: {
+      properties: withProfile({
         journalNumber: { type: ["string", "integer"] },
         accountingYear: { type: "string" },
         voucherNumber: { type: ["string", "integer"] },
-      },
+      }),
       required: ["journalNumber", "accountingYear", "voucherNumber"],
       additionalProperties: false,
     },
     handler: async (args) => {
       const journal = encodeURIComponent(String(args.journalNumber));
       const voucher = `${encodeURIComponent(String(args.accountingYear))}-${encodeURIComponent(String(args.voucherNumber))}`;
-      const res = await client.request({
+      const res = await clients.resolve(args.profile).request({
         method: "GET",
         path: `journals/${journal}/vouchers/${voucher}/attachment`,
       });
@@ -313,18 +317,18 @@ export function typedTools(client: EconomicClient): ToolDefinition[] {
       "journalNumber, accountingYear and voucherNumber.",
     inputSchema: {
       type: "object",
-      properties: {
+      properties: withProfile({
         journalNumber: { type: ["string", "integer"] },
         accountingYear: { type: "string" },
         voucherNumber: { type: ["string", "integer"] },
-      },
+      }),
       required: ["journalNumber", "accountingYear", "voucherNumber"],
       additionalProperties: false,
     },
     handler: async (args) => {
       const journal = encodeURIComponent(String(args.journalNumber));
       const voucher = `${encodeURIComponent(String(args.accountingYear))}-${encodeURIComponent(String(args.voucherNumber))}`;
-      const res = await client.request({
+      const res = await clients.resolve(args.profile).request({
         method: "DELETE",
         path: `journals/${journal}/vouchers/${voucher}/attachment/file`,
       });
@@ -346,16 +350,16 @@ export function typedTools(client: EconomicClient): ToolDefinition[] {
         `'id' (the ${draft.idHint}). Only PDF files are supported; max 9 MB.`,
       inputSchema: {
         type: "object",
-        properties: {
+        properties: withProfile({
           id: { type: ["string", "integer"], description: `The ${draft.idHint}.` },
           ...fileInputProps,
-        },
+        }),
         required: ["id"],
         additionalProperties: false,
       },
       handler: async (args) => {
         const { data, fileName } = await resolveUploadData(args);
-        const res = await client.uploadFile({
+        const res = await clients.resolve(args.profile).uploadFile({
           path: `${draft.path}/${encodeURIComponent(String(args.id))}/attachment/file`,
           data,
           fileName,

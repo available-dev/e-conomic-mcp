@@ -7,11 +7,11 @@
  * specs don't exceed client tool limits.
  */
 
-import type { EconomicClient } from "../economicClient.js";
+import type { ClientRegistry } from "../clientRegistry.js";
 import type { HttpMethod } from "../economicClient.js";
 import type { ApiSpec, OperationInfo } from "../openapi.js";
 import { resolveUploadData } from "./generic.js";
-import type { ToolDefinition } from "./types.js";
+import { PROFILE_PROPERTY, type ToolDefinition } from "./types.js";
 
 /** Input properties shared by every multipart file-upload tool. */
 const FILE_UPLOAD_PROPS: Record<string, unknown> = {
@@ -36,7 +36,7 @@ const FILE_UPLOAD_PROPS: Record<string, unknown> = {
 };
 
 export function dynamicTools(
-  client: EconomicClient,
+  clients: ClientRegistry,
   spec: ApiSpec,
   limit: number,
 ): ToolDefinition[] {
@@ -50,7 +50,7 @@ export function dynamicTools(
       name,
       description: buildDescription(op),
       inputSchema: buildInputSchema(op),
-      handler: makeHandler(client, op),
+      handler: makeHandler(clients, op),
     });
   }
 
@@ -102,6 +102,12 @@ function buildInputSchema(op: OperationInfo): Record<string, unknown> {
     if (op.method !== "GET") required.push("body");
   }
 
+  // Expose the per-call account selector, unless the operation already has a
+  // parameter literally named "profile".
+  if (!("profile" in properties)) {
+    properties.profile = PROFILE_PROPERTY.profile;
+  }
+
   return {
     type: "object",
     properties,
@@ -115,7 +121,7 @@ function paramKey(location: string, name: string): string {
   return location === "path" ? `path_${name}` : name;
 }
 
-function makeHandler(client: EconomicClient, op: OperationInfo) {
+function makeHandler(clients: ClientRegistry, op: OperationInfo) {
   return async (args: Record<string, any>) => {
     // Substitute path parameters.
     let path = op.path;
@@ -137,6 +143,7 @@ function makeHandler(client: EconomicClient, op: OperationInfo) {
     }
 
     const queryArg = Object.keys(query).length > 0 ? query : undefined;
+    const client = clients.resolve(args.profile);
 
     if (op.fileUpload) {
       const { data, fileName } = await resolveUploadData(args);

@@ -14,13 +14,16 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 
 import { loadConfig } from "./config.js";
 import { buildServer } from "./server.js";
-import { crawlSchemas } from "./crawl.js";
+import { crawlSchemas, extractSchemaList } from "./crawl.js";
 
 const HELP = `e-conomic-mcp — MCP server for the e-conomic REST API
 
 Usage:
   e-conomic-mcp [serve]                 Start the MCP server over stdio (default)
   e-conomic-mcp crawl-schemas [outDir]  Download e-conomic JSON schema files
+  e-conomic-mcp extract-schema-list <restdocs.html> [out.txt]
+                                        Extract the schema filename list from the
+                                        restdocs HTML page
   e-conomic-mcp doctor                  Check credentials and API connectivity
 
 Options:
@@ -61,6 +64,9 @@ export async function runCli(argv: string[]): Promise<void> {
       return;
     case "crawl-schemas":
       await runCrawl(args.slice(1));
+      return;
+    case "extract-schema-list":
+      await runExtract(args.slice(1));
       return;
     case "doctor":
       await doctor();
@@ -106,6 +112,28 @@ async function runCrawl(rest: string[]): Promise<void> {
       "Nothing downloaded — check the schema base URL and credentials.\n",
     );
     process.exitCode = 2;
+  }
+}
+
+async function runExtract(rest: string[]): Promise<void> {
+  const positional = rest.filter((a) => !a.startsWith("-"));
+  const htmlPath = positional[0];
+  if (!htmlPath) {
+    process.stderr.write("Usage: e-conomic-mcp extract-schema-list <restdocs.html> [out.txt]\n");
+    process.exitCode = 1;
+    return;
+  }
+  const outPath = positional[1];
+  const html = await readFile(htmlPath, "utf8");
+  const names = extractSchemaList(html);
+  const text = names.join("\n") + "\n";
+  if (outPath) {
+    const { writeFile } = await import("node:fs/promises");
+    await writeFile(outPath, text, "utf8");
+    process.stderr.write(`Extracted ${names.length} schema filenames to ${outPath}\n`);
+  } else {
+    process.stdout.write(text);
+    process.stderr.write(`\nExtracted ${names.length} schema filenames.\n`);
   }
 }
 

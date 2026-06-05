@@ -182,15 +182,25 @@ e-conomic-mcp crawl-schemas
 
 It discovers the top-level collections from the API's self-describing root and
 downloads the matching `*.schema.json` files from `<base>/schema` (missing ones
-are skipped — there is no master index of all schemas). For exhaustive coverage,
-supply an explicit list of filenames:
+are skipped — there is no master index of all schemas).
+
+**For exhaustive coverage**, this repo ships the complete, authoritative list of
+all 160 schema filenames in [`spec/schema-files.txt`](./spec/schema-files.txt),
+extracted from e-conomic's restdocs page. Download them all with:
 
 ```bash
-e-conomic-mcp crawl-schemas --file-list ./schema-files.txt
+e-conomic-mcp crawl-schemas --file-list spec/schema-files.txt --out spec/schemas
 ```
 
-Flags: `--out <dir>`, `--schema-base <url>`, `--file-list <path>`. Commit the
-result as `spec/schemas/` and set `ECONOMIC_SCHEMA_DIR=./spec/schemas`.
+Then set `ECONOMIC_SCHEMA_DIR=./spec/schemas`.
+
+The list was generated from the docs HTML with:
+
+```bash
+e-conomic-mcp extract-schema-list spec/restdocs.html spec/schema-files.txt
+```
+
+Flags: `--out <dir>`, `--schema-base <url>`, `--file-list <path>`.
 
 ## Development
 

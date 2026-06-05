@@ -30,6 +30,21 @@ export interface CrawlResult {
   outDir: string;
 }
 
+/**
+ * Extract the complete list of schema filenames referenced by e-conomic's
+ * restdocs HTML page (links to `.../schema/<name>.schema.json`). This yields the
+ * authoritative, deduplicated set of endpoints — no convention guessing needed.
+ */
+export function extractSchemaList(html: string): string[] {
+  const re = /\/schema\/([a-zA-Z0-9._-]+\.schema\.json)/g;
+  const names = new Set<string>();
+  let match: RegExpExecArray | null;
+  while ((match = re.exec(html)) !== null) {
+    names.add(match[1]!);
+  }
+  return [...names].sort();
+}
+
 /** Heuristic id parameter name for a collection (customers -> customerNumber). */
 function guessIdParam(collection: string): string {
   const singular = collection.endsWith("s") ? collection.slice(0, -1) : collection;

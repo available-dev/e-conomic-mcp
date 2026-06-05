@@ -109,7 +109,7 @@ export function parseFileName(fileName: string): ParsedName | undefined {
   const segments = tokens.slice(0, -1);
   const pathParams: string[] = [];
   const pathParts = segments.map((seg) => {
-    if (/[A-Z]/.test(seg)) {
+    if (isPathParam(seg)) {
       pathParams.push(seg);
       return `{${seg}}`;
     }
@@ -123,6 +123,20 @@ export function parseFileName(fileName: string): ParsedName | undefined {
     operationId: `${method}_${segments.join("_")}`,
     tag: segments[0] ?? "(untagged)",
   };
+}
+
+/**
+ * Decide whether a dotted filename segment is a path parameter. e-conomic's
+ * params are camelCase (e.g. `customerNumber`, `accountingYear`,
+ * `accountingYear-voucherNumber`) plus a few bare lowercase identity tokens
+ * (`id`, `code`, `customergroupnumber`). Literal sub-resources are lower/kebab
+ * nouns (`totals`, `entries`, `lines`, `currency-specific-sales-prices`, ...).
+ */
+function isPathParam(seg: string): boolean {
+  if (/[A-Z]/.test(seg)) return true;
+  if (seg === "id") return true;
+  if (/number$/i.test(seg) || /code$/i.test(seg)) return true;
+  return false;
 }
 
 function buildOperation(parsed: ParsedName, schema: JsonSchema): OperationInfo {

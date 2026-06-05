@@ -218,8 +218,10 @@ Attachments: `economic_upload_voucher_attachment` (with `append` to add pages),
 ### Dynamic per-endpoint tools
 
 When `ECONOMIC_DYNAMIC_TOOLS=true`, every operation in the spec is exposed as an
-`economic_op_<operationId>` tool with a generated input schema (160 operations;
-bounded by `ECONOMIC_DYNAMIC_TOOLS_LIMIT`).
+`economic_op_<operationId>` tool with a generated input schema (176 operations;
+bounded by `ECONOMIC_DYNAMIC_TOOLS_LIMIT`). Operations with a
+`multipart/form-data` body (the attachment uploads) take `filePath`/`content`
+inputs and are sent as multipart automatically.
 
 ## Filtering & sorting
 

@@ -10,7 +10,30 @@
 import type { EconomicClient } from "../economicClient.js";
 import type { HttpMethod } from "../economicClient.js";
 import type { ApiSpec, OperationInfo } from "../openapi.js";
+import { resolveUploadData } from "./generic.js";
 import type { ToolDefinition } from "./types.js";
+
+/** Input properties shared by every multipart file-upload tool. */
+const FILE_UPLOAD_PROPS: Record<string, unknown> = {
+  filePath: {
+    type: "string",
+    description: "Absolute path to a local file to upload. Use this OR 'content'.",
+  },
+  content: {
+    type: "string",
+    description: "Base64-encoded file bytes, as an alternative to filePath. Requires 'fileName'.",
+  },
+  fileName: {
+    type: "string",
+    description:
+      "File name including extension (e.g. 'receipt.pdf'). Required with 'content'; " +
+      "defaults to the basename of filePath otherwise. The extension sets the MIME type.",
+  },
+  contentType: {
+    type: "string",
+    description: "Optional explicit MIME type; inferred from the file name when omitted.",
+  },
+};
 
 export function dynamicTools(
   client: EconomicClient,
@@ -68,7 +91,10 @@ function buildInputSchema(op: OperationInfo): Record<string, unknown> {
     if (p.required) required.push(propName);
   }
 
-  if (op.requestBodySchema) {
+  if (op.fileUpload) {
+    // Binary upload: take a file instead of a JSON body.
+    Object.assign(properties, FILE_UPLOAD_PROPS);
+  } else if (op.requestBodySchema) {
     properties.body = {
       ...op.requestBodySchema,
       description: "JSON request body.",
@@ -110,10 +136,25 @@ function makeHandler(client: EconomicClient, op: OperationInfo) {
       }
     }
 
+    const queryArg = Object.keys(query).length > 0 ? query : undefined;
+
+    if (op.fileUpload) {
+      const { data, fileName } = await resolveUploadData(args);
+      const res = await client.uploadFile({
+        method: op.method === "PATCH" ? "PATCH" : "POST",
+        path,
+        query: queryArg,
+        data,
+        fileName,
+        contentType: args.contentType as string | undefined,
+      });
+      return { status: res.status, data: res.data };
+    }
+
     const res = await client.request({
       method: op.method as HttpMethod,
       path,
-      query: Object.keys(query).length > 0 ? query : undefined,
+      query: queryArg,
       body: args.body,
     });
     return { status: res.status, data: res.data };

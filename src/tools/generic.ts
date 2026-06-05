@@ -288,6 +288,15 @@ export function genericTools(
           parameters: op.parameters,
           requestBodySchema: op.requestBodySchema,
           responseSchema: op.responseSchema,
+          fileUpload: op.fileUpload,
+          ...(op.fileUpload
+            ? {
+                uploadHint:
+                  "This is a multipart/form-data file upload. Use economic_upload_file " +
+                  "(or the dynamic tool, which takes filePath/content) — not economic_request, " +
+                  "which only sends JSON.",
+              }
+            : {}),
         };
       },
     });

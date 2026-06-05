@@ -48396,6 +48396,648 @@
           }
         }
       }
+    },
+    "/journals/{journalNumber}/vouchers/{accountingYear-voucherNumber}/attachment/file": {
+      "get": {
+        "operationId": "get_journals_journalNumber_vouchers_accountingYear_voucherNumber_attachment_file",
+        "summary": "Download the attachment file",
+        "description": "Returns the attachment file for this resource. Always returned as a PDF.",
+        "tags": [
+          "journals"
+        ],
+        "parameters": [
+          {
+            "name": "journalNumber",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "accountingYear-voucherNumber",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The attachment file. Always returned as a PDF.",
+            "content": {
+              "application/pdf": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "post_journals_journalNumber_vouchers_accountingYear_voucherNumber_attachment_file",
+        "summary": "Upload an attachment file",
+        "description": "Attach a document via multipart/form-data. Supported formats: .pdf, .jpg, .jpeg, .gif, .png. application/json is NOT a valid content-type for this endpoint; the body must be multipart/form-data with the file part. Max 9 MB. Returns 201 on success.",
+        "tags": [
+          "journals"
+        ],
+        "parameters": [
+          {
+            "name": "journalNumber",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "accountingYear-voucherNumber",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "The binary file to attach. Supported formats: .pdf, .jpg, .jpeg, .gif, .png. Max 9 MB."
+                  }
+                },
+                "required": [
+                  "file"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The attachment was created."
+          }
+        }
+      },
+      "patch": {
+        "operationId": "patch_journals_journalNumber_vouchers_accountingYear_voucherNumber_attachment_file",
+        "summary": "Append pages to an attachment file",
+        "description": "Add more pages to the file associated with the voucher (creates it if absent). Uses multipart/form-data, same as POST. Max 9 MB.",
+        "tags": [
+          "journals"
+        ],
+        "parameters": [
+          {
+            "name": "journalNumber",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "accountingYear-voucherNumber",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "The binary file to attach. Supported formats: .pdf, .jpg, .jpeg, .gif, .png. Max 9 MB."
+                  }
+                },
+                "required": [
+                  "file"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The attachment was created."
+          }
+        }
+      },
+      "delete": {
+        "operationId": "delete_journals_journalNumber_vouchers_accountingYear_voucherNumber_attachment_file",
+        "summary": "Delete the attachment file",
+        "description": "Removes the entire file associated with this resource. Returns 204 on success.",
+        "tags": [
+          "journals"
+        ],
+        "parameters": [
+          {
+            "name": "journalNumber",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "accountingYear-voucherNumber",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "The attachment was deleted."
+          }
+        }
+      }
+    },
+    "/invoices/drafts/{draftInvoiceNumber}/attachment": {
+      "get": {
+        "operationId": "get_invoices_drafts_draftInvoiceNumber_attachment",
+        "summary": "Get attachment metadata",
+        "description": "Returns metadata about the attached file (page count, created date, file link).",
+        "tags": [
+          "invoices"
+        ],
+        "parameters": [
+          {
+            "name": "draftInvoiceNumber",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Attachment file metadata.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "createdAt": {
+                      "type": "string",
+                      "format": "full-date",
+                      "description": "Date the file was assigned."
+                    },
+                    "description": {
+                      "type": "string",
+                      "description": "Note on the attachment."
+                    },
+                    "file": {
+                      "type": "string",
+                      "format": "uri",
+                      "description": "Link to the file attachment."
+                    },
+                    "pages": {
+                      "type": "integer",
+                      "description": "Number of pages in the attachment."
+                    },
+                    "self": {
+                      "type": "string",
+                      "format": "uri",
+                      "description": "Link to the attachment metadata."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/invoices/drafts/{draftInvoiceNumber}/attachment/file": {
+      "get": {
+        "operationId": "get_invoices_drafts_draftInvoiceNumber_attachment_file",
+        "summary": "Download the attachment file",
+        "description": "Returns the attachment file for this resource. Always returned as a PDF.",
+        "tags": [
+          "invoices"
+        ],
+        "parameters": [
+          {
+            "name": "draftInvoiceNumber",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The attachment file. Always returned as a PDF.",
+            "content": {
+              "application/pdf": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "post_invoices_drafts_draftInvoiceNumber_attachment_file",
+        "summary": "Upload an attachment file",
+        "description": "Attach a document via multipart/form-data. Supported formats: .pdf. application/json is NOT a valid content-type for this endpoint; the body must be multipart/form-data with the file part. Max 9 MB. Returns 201 on success.",
+        "tags": [
+          "invoices"
+        ],
+        "parameters": [
+          {
+            "name": "draftInvoiceNumber",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "The binary file to attach. Supported formats: .pdf. Max 9 MB."
+                  }
+                },
+                "required": [
+                  "file"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The attachment was created."
+          }
+        }
+      },
+      "delete": {
+        "operationId": "delete_invoices_drafts_draftInvoiceNumber_attachment_file",
+        "summary": "Delete the attachment file",
+        "description": "Removes the entire file associated with this resource. Returns 204 on success.",
+        "tags": [
+          "invoices"
+        ],
+        "parameters": [
+          {
+            "name": "draftInvoiceNumber",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "The attachment was deleted."
+          }
+        }
+      }
+    },
+    "/orders/drafts/{orderNumber}/attachment": {
+      "get": {
+        "operationId": "get_orders_drafts_orderNumber_attachment",
+        "summary": "Get attachment metadata",
+        "description": "Returns metadata about the attached file (page count, created date, file link).",
+        "tags": [
+          "orders"
+        ],
+        "parameters": [
+          {
+            "name": "orderNumber",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Attachment file metadata.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "createdAt": {
+                      "type": "string",
+                      "format": "full-date",
+                      "description": "Date the file was assigned."
+                    },
+                    "description": {
+                      "type": "string",
+                      "description": "Note on the attachment."
+                    },
+                    "file": {
+                      "type": "string",
+                      "format": "uri",
+                      "description": "Link to the file attachment."
+                    },
+                    "pages": {
+                      "type": "integer",
+                      "description": "Number of pages in the attachment."
+                    },
+                    "self": {
+                      "type": "string",
+                      "format": "uri",
+                      "description": "Link to the attachment metadata."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/orders/drafts/{orderNumber}/attachment/file": {
+      "get": {
+        "operationId": "get_orders_drafts_orderNumber_attachment_file",
+        "summary": "Download the attachment file",
+        "description": "Returns the attachment file for this resource. Always returned as a PDF.",
+        "tags": [
+          "orders"
+        ],
+        "parameters": [
+          {
+            "name": "orderNumber",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The attachment file. Always returned as a PDF.",
+            "content": {
+              "application/pdf": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "post_orders_drafts_orderNumber_attachment_file",
+        "summary": "Upload an attachment file",
+        "description": "Attach a document via multipart/form-data. Supported formats: .pdf. application/json is NOT a valid content-type for this endpoint; the body must be multipart/form-data with the file part. Max 9 MB. Returns 201 on success.",
+        "tags": [
+          "orders"
+        ],
+        "parameters": [
+          {
+            "name": "orderNumber",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "The binary file to attach. Supported formats: .pdf. Max 9 MB."
+                  }
+                },
+                "required": [
+                  "file"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The attachment was created."
+          }
+        }
+      },
+      "delete": {
+        "operationId": "delete_orders_drafts_orderNumber_attachment_file",
+        "summary": "Delete the attachment file",
+        "description": "Removes the entire file associated with this resource. Returns 204 on success.",
+        "tags": [
+          "orders"
+        ],
+        "parameters": [
+          {
+            "name": "orderNumber",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "The attachment was deleted."
+          }
+        }
+      }
+    },
+    "/quotes/drafts/{quoteNumber}/attachment": {
+      "get": {
+        "operationId": "get_quotes_drafts_quoteNumber_attachment",
+        "summary": "Get attachment metadata",
+        "description": "Returns metadata about the attached file (page count, created date, file link).",
+        "tags": [
+          "quotes"
+        ],
+        "parameters": [
+          {
+            "name": "quoteNumber",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Attachment file metadata.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "createdAt": {
+                      "type": "string",
+                      "format": "full-date",
+                      "description": "Date the file was assigned."
+                    },
+                    "description": {
+                      "type": "string",
+                      "description": "Note on the attachment."
+                    },
+                    "file": {
+                      "type": "string",
+                      "format": "uri",
+                      "description": "Link to the file attachment."
+                    },
+                    "pages": {
+                      "type": "integer",
+                      "description": "Number of pages in the attachment."
+                    },
+                    "self": {
+                      "type": "string",
+                      "format": "uri",
+                      "description": "Link to the attachment metadata."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/quotes/drafts/{quoteNumber}/attachment/file": {
+      "get": {
+        "operationId": "get_quotes_drafts_quoteNumber_attachment_file",
+        "summary": "Download the attachment file",
+        "description": "Returns the attachment file for this resource. Always returned as a PDF.",
+        "tags": [
+          "quotes"
+        ],
+        "parameters": [
+          {
+            "name": "quoteNumber",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The attachment file. Always returned as a PDF.",
+            "content": {
+              "application/pdf": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "post_quotes_drafts_quoteNumber_attachment_file",
+        "summary": "Upload an attachment file",
+        "description": "Attach a document via multipart/form-data. Supported formats: .pdf. application/json is NOT a valid content-type for this endpoint; the body must be multipart/form-data with the file part. Max 9 MB. Returns 201 on success.",
+        "tags": [
+          "quotes"
+        ],
+        "parameters": [
+          {
+            "name": "quoteNumber",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "The binary file to attach. Supported formats: .pdf. Max 9 MB."
+                  }
+                },
+                "required": [
+                  "file"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The attachment was created."
+          }
+        }
+      },
+      "delete": {
+        "operationId": "delete_quotes_drafts_quoteNumber_attachment_file",
+        "summary": "Delete the attachment file",
+        "description": "Removes the entire file associated with this resource. Returns 204 on success.",
+        "tags": [
+          "quotes"
+        ],
+        "parameters": [
+          {
+            "name": "quoteNumber",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "The attachment was deleted."
+          }
+        }
+      }
     }
   }
 }

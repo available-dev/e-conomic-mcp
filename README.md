@@ -16,7 +16,7 @@ generated from an OpenAPI spec.
 
 ```bash
 # install
-npm install -g @available/e-conomic-mcp
+npm install -g @available-dev/e-conomic-mcp
 
 # store your e-conomic credentials locally (app secret + agreement grant token)
 e-conomic-mcp auth login
@@ -43,6 +43,10 @@ Now ask Claude things like *"list my 5 most recent e-conomic customers"*.
 
 - **Full API coverage** via a universal `economic_request` tool — any method,
   any path.
+- **File uploads** via `economic_upload_file` and typed attachment tools —
+  attach receipts/PDFs to vouchers, draft invoices, orders and quotes using
+  e-conomic's `multipart/form-data` endpoints (which `economic_request` can't
+  reach, as it only sends JSON).
 - **Typed convenience tools** for the high-traffic resources (customers,
   suppliers, products, draft/booked invoices, orders, quotes, journals,
   accounts, groups, payment terms, VAT zones, currencies, units, employees).
@@ -64,7 +68,7 @@ Now ask Claude things like *"list my 5 most recent e-conomic customers"*.
 ### From npm
 
 ```bash
-npm install -g @available/e-conomic-mcp
+npm install -g @available-dev/e-conomic-mcp
 ```
 
 This puts an `e-conomic-mcp` command on your PATH.
@@ -226,6 +230,14 @@ credentials and connectivity first.
 ### Generic (always available)
 
 - **`economic_request`** — call any endpoint: `{ method, path, query?, body? }`.
+  Sends a JSON body, so it cannot be used for binary file uploads — use
+  `economic_upload_file` for those.
+- **`economic_upload_file`** — upload a binary file to any `multipart/form-data`
+  endpoint: `{ path, filePath | content, fileName?, contentType?, method? }`.
+  The universal escape hatch for the attachment endpoints. Supply the file as a
+  local `filePath` or base64 `content`. Supported formats: `.pdf`, `.jpg`,
+  `.jpeg`, `.gif`, `.png` (draft invoices/orders/quotes accept PDF only); max
+  9 MB. Use `method: "PATCH"` to append pages to an existing voucher attachment.
 - **`economic_list_resources`** — list resource collections (from the spec, or
   the API's self-describing root).
 - **`economic_get_collection`** — fetch a collection with `filter`, `sort`,
@@ -247,11 +259,18 @@ accounts, currencies, units, employees.
 Writes: `economic_create_customer`, `economic_update_customer`,
 `economic_create_draft_invoice`, `economic_book_draft_invoice`.
 
+Attachments: `economic_upload_voucher_attachment` (with `append` to add pages),
+`economic_get_voucher_attachment`, `economic_delete_voucher_attachment`, and
+`economic_upload_draft_invoice_attachment` / `_draft_order_attachment` /
+`_draft_quote_attachment`.
+
 ### Dynamic per-endpoint tools
 
 When `ECONOMIC_DYNAMIC_TOOLS=true`, every operation in the spec is exposed as an
-`economic_op_<operationId>` tool with a generated input schema (160 operations;
-bounded by `ECONOMIC_DYNAMIC_TOOLS_LIMIT`).
+`economic_op_<operationId>` tool with a generated input schema (176 operations;
+bounded by `ECONOMIC_DYNAMIC_TOOLS_LIMIT`). Operations with a
+`multipart/form-data` body (the attachment uploads) take `filePath`/`content`
+inputs and are sent as multipart automatically.
 
 ## Filtering & sorting
 

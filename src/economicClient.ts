@@ -15,7 +15,12 @@ export interface RequestOptions {
   path: string;
   /** Query parameters. Arrays are repeated; objects are JSON-stringified. */
   query?: Record<string, unknown> | undefined;
-  /** JSON request body (objects/arrays). Ignored for GET/DELETE. */
+  /**
+   * JSON request body. Objects/arrays are serialized with JSON.stringify; a
+   * string is treated as raw JSON text and sent verbatim (so callers — or models
+   * that pass an already-stringified body — don't get double-encoded). Ignored
+   * for GET/DELETE.
+   */
   body?: unknown;
 }
 
@@ -89,9 +94,19 @@ export class EconomicClient {
 
     const hasBody =
       opts.body !== undefined && opts.method !== "GET" && opts.method !== "DELETE";
-    if (hasBody) headers["Content-Type"] = "application/json";
 
-    return this.execute(opts.method, url, headers, hasBody ? JSON.stringify(opts.body) : undefined);
+    let serializedBody: string | undefined;
+    if (hasBody) {
+      headers["Content-Type"] = "application/json";
+      // A string body is assumed to already be JSON text (models calling the
+      // generic tool routinely pass a pre-stringified object); sending it
+      // verbatim avoids JSON.stringify double-encoding it into a quoted string,
+      // which e-conomic rejects as "Invalid json in request body".
+      serializedBody =
+        typeof opts.body === "string" ? opts.body : JSON.stringify(opts.body);
+    }
+
+    return this.execute(opts.method, url, headers, serializedBody);
   }
 
   /**

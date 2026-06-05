@@ -32,11 +32,32 @@ generated from an OpenAPI spec.
 - e-conomic credentials: an **app secret token** and an **agreement grant
   token** (see below).
 
-## Install & build
+## Install
+
+### From npm (once published)
 
 ```bash
-npm install
-npm run build
+npm install -g e-conomic-mcp
+```
+
+This puts an `e-conomic-mcp` command on your PATH.
+
+### From source
+
+```bash
+git clone https://github.com/available-dev/e-conomic-mcp.git
+cd e-conomic-mcp
+npm install            # also builds via the prepare script
+npm link               # optional: expose the `e-conomic-mcp` command globally
+```
+
+## CLI
+
+```text
+e-conomic-mcp [serve]                 Start the MCP server over stdio (default)
+e-conomic-mcp crawl-schemas [outDir]  Download e-conomic JSON schema files
+e-conomic-mcp doctor                  Check credentials and API connectivity
+e-conomic-mcp --help | --version
 ```
 
 ## Authentication
@@ -55,14 +76,14 @@ config). For experimentation, e-conomic publishes demo tokens in their docs.
 
 ### With Claude Desktop / Claude Code
 
-Add to your MCP client config (e.g. `claude_desktop_config.json`):
+Add to your MCP client config (e.g. `claude_desktop_config.json`). With the CLI
+installed, just reference the command:
 
 ```json
 {
   "mcpServers": {
     "e-conomic": {
-      "command": "node",
-      "args": ["/absolute/path/to/e-conomic-mcp/dist/index.js"],
+      "command": "e-conomic-mcp",
       "env": {
         "ECONOMIC_APP_SECRET_TOKEN": "your-app-secret-token",
         "ECONOMIC_AGREEMENT_GRANT_TOKEN": "your-agreement-grant-token"
@@ -72,13 +93,17 @@ Add to your MCP client config (e.g. `claude_desktop_config.json`):
 }
 ```
 
+(If you didn't install globally, use `"command": "node"` with
+`"args": ["/absolute/path/to/e-conomic-mcp/dist/index.js"]`.)
+
 ### Run directly
 
 ```bash
-ECONOMIC_APP_SECRET_TOKEN=... ECONOMIC_AGREEMENT_GRANT_TOKEN=... node dist/index.js
+ECONOMIC_APP_SECRET_TOKEN=... ECONOMIC_AGREEMENT_GRANT_TOKEN=... e-conomic-mcp
 ```
 
-The server speaks MCP over stdio.
+The server speaks MCP over stdio. Use `e-conomic-mcp doctor` to verify your
+credentials and connectivity first.
 
 ## Configuration
 
@@ -144,27 +169,50 @@ dynamic per-endpoint tools, give it one of:
    `vat-zones.vatZoneNumber.get.schema.json` → `GET /vat-zones/{vatZoneNumber}`.
    Point `ECONOMIC_SCHEMA_DIR` at a directory of these files.
 
+e-conomic serves these files at `https://restapi.e-conomic.com/schema/`.
+
 ### Crawling the schema files
 
 Use the bundled crawler to download the schema files into `./spec/schemas`:
 
 ```bash
 ECONOMIC_APP_SECRET_TOKEN=... ECONOMIC_AGREEMENT_GRANT_TOKEN=... \
-ECONOMIC_SCHEMA_BASE_URL=<base-url-of-schema-files> \
-node scripts/crawl-schemas.mjs
+e-conomic-mcp crawl-schemas
 ```
 
 It discovers the top-level collections from the API's self-describing root and
-downloads the matching `*.schema.json` files (missing ones are skipped). You can
-also supply an explicit list via `ECONOMIC_SCHEMA_FILELIST`. Commit the result
-as `spec/schemas/` and set `ECONOMIC_SCHEMA_DIR=./spec/schemas`.
+downloads the matching `*.schema.json` files from `<base>/schema` (missing ones
+are skipped — there is no master index of all schemas). For exhaustive coverage,
+supply an explicit list of filenames:
+
+```bash
+e-conomic-mcp crawl-schemas --file-list ./schema-files.txt
+```
+
+Flags: `--out <dir>`, `--schema-base <url>`, `--file-list <path>`. Commit the
+result as `spec/schemas/` and set `ECONOMIC_SCHEMA_DIR=./spec/schemas`.
 
 ## Development
 
 ```bash
 npm run typecheck   # type-check only
 npm run watch       # incremental compile
+npm run doctor      # verify credentials/connectivity (needs env vars)
 ```
+
+## Publishing to npm
+
+The package builds to `dist/` and exposes the `e-conomic-mcp` bin. `prepare`
+builds on install and `prepublishOnly` does a clean rebuild before publish.
+
+```bash
+npm run build
+npm pack --dry-run     # inspect the tarball contents
+npm publish            # publishConfig.access is already set to public
+```
+
+Bump the version with `npm version <patch|minor|major>` first. Publish once the
+server is verified against a live e-conomic account.
 
 ## Disclaimer
 

@@ -90,7 +90,7 @@ export async function buildServer(config: Config): Promise<BuiltServer> {
   }
 
   const server = new Server(
-    { name: "e-conomic-mcp", version: "0.1.0" },
+    { name: "e-conomic-mcp", version: "0.2.0" },
     { capabilities: { tools: {} } },
   );
 

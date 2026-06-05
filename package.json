@@ -1,6 +1,6 @@
 {
   "name": "@available/e-conomic-mcp",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Model Context Protocol (MCP) server and CLI for the e-conomic REST API. Full API coverage via a generic request tool, schema-driven discovery, optional per-endpoint tool generation, and typed convenience tools.",
   "license": "MIT",
   "type": "module",

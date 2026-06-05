@@ -1,0 +1,43 @@
+{
+  "name": "e-conomic-mcp",
+  "version": "0.1.0",
+  "description": "Model Context Protocol (MCP) server for the e-conomic REST API. Full API coverage via a generic request tool, runtime OpenAPI discovery, optional per-endpoint tool generation, and typed convenience tools.",
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "e-conomic-mcp": "dist/index.js"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "watch": "tsc -p tsconfig.json --watch",
+    "start": "node dist/index.js",
+    "dev": "node --watch --loader ts-node/esm src/index.ts",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "prepare": "npm run build"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "e-conomic",
+    "economic",
+    "visma",
+    "accounting",
+    "rest-api",
+    "claude"
+  ],
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "typescript": "^5.7.0"
+  }
+}

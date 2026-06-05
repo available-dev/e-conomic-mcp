@@ -1,0 +1,501 @@
+{
+  "$schema": "http://json-schema.org/draft-03/schema#",
+  "title": "Draft quote post schema",
+  "description": "A schema for creating a draft quote.",
+  "type": "object",
+  "restdocs": "http://restdocs.e-conomic.com/#post-quotes-drafts",
+  "properties": {
+    "date": {
+      "type": "string",
+      "format": "full-date",
+      "pattern": "\\d{4}-\\d{2}-\\d{2}",
+      "required": true,
+      "description": "quote issue date. Format according to ISO-8601 (YYYY-MM-DD)."
+    },
+    "currency": {
+      "type": "string",
+      "pattern": "[a-zA-Z]{3}",
+      "required": true,
+      "description": "The ISO 4217 3-letter currency code of the quote."
+    },
+    "exchangeRate": {
+      "type": "number",
+      "maxDecimal": 6,
+      "maximum": 999999999999,
+      "description": "The desired exchange rate between the quote currency and the base currency of the agreement. The exchange rate expresses how much it will cost in base currency to buy 100 units of the quote currency. If no exchange rate is supplied, the system will get the current daily rate, unless the quote currency is the same as the base currency, in which case it will be set to 100."
+    },
+    "dueDate": {
+      "type": "string",
+      "format": "full-date",
+      "pattern": "\\d{4}-\\d{2}-\\d{2}",
+      "description": "The date the quote is due for payment. This property is only used if the terms of payment is of type 'duedate', in which case it is a mandatory property. Format according to ISO-8601 (YYYY-MM-DD)."
+    },
+    "grossAmount": {
+      "type": "number",
+      "readOnly": true,
+      "maxDecimal": 2,
+      "description": "The total quote amount in the quote currency after all taxes and discounts have been applied."
+    },
+    "marginInBaseCurrency": {
+      "type": "number",
+      "maxDecimal": 2,
+      "readOnly": true,
+      "description": "The difference between the cost price of the items on the quote and the sales net quote amount in base currency."
+    },
+    "marginPercentage": {
+      "type": "number",
+      "maxDecimal": 2,
+      "readOnly": true,
+      "description": "The margin expressed as a percentage. If the net quote amount is less than the cost price this number will be negative."
+    },
+    "netAmount": {
+      "type": "number",
+      "maxDecimal": 2,
+      "readOnly": true,
+      "description": "The total quote amount in the quote currency before all taxes and discounts have been applied."
+    },
+    "roundingAmount": {
+      "type": "number",
+      "maxDecimal": 2,
+      "readOnly": true,
+      "description": "The total rounding error, if any, on the quote in base currency."
+    },
+    "vatAmount": {
+      "type": "number",
+      "maxDecimal": 2,
+      "readOnly": true,
+      "description": "The total amount of VAT on the quote in the quote currency. This will have the same sign as net amount"
+    },
+    "layout": {
+      "type": "object",
+      "description": "The layout used by the quote.",
+      "required": true,
+      "properties": {
+        "layoutNumber": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "A unique identifier of the layout."
+        },
+        "self": {
+          "type": "string",
+          "format": "uri",
+          "description": "A unique reference to the layout resource."
+        }
+      }
+    },
+    "project": {
+      "type": "object",
+      "description": "The project the quote is connected to.",
+      "properties": {
+        "projectNumber": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "A unique identifier of the project."
+        },
+        "self": {
+          "type": "string",
+          "format": "uri",
+          "description": "A unique reference to the project resource."
+        }
+      }
+    },
+    "paymentTerms": {
+      "type": "object",
+      "required": true,
+      "description": "The terms of payment for the quote.",
+      "properties": {
+        "paymentTermsNumber": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "A unique identifier of the payment term."
+        },
+        "daysOfCredit": {
+          "readonly": true,
+          "type": "integer",
+          "minimum": 0,
+          "description": "The number of days of credit on the quote. This field is only valid if terms of payment is not of type 'duedate"
+        },
+        "paymentTermsType": {
+					"enum": ["net", "invoiceMonth", "paidInCash", "prepaid", "dueDate", "factoring", "invoiceWeekStartingSunday", "invoiceWeekStartingMonday", "creditcard", "avtaleGiro"],
+          "readonly": true,
+          "description": "The type the payment term."
+        },
+        "self": {
+          "type": "string",
+          "format": "uri",
+          "description": "A unique reference to the payment term resource."
+        }
+      }
+    },
+    "customer": {
+      "type": "object",
+      "required": true,
+      "description": "The customer of the quote.",
+      "properties": {
+        "customerNumber": {
+          "type": "integer",
+          "maximum": 999999999,
+          "minimum": 1,
+          "description": "The customer id number. The customer id number can be either positive or negative, but it can't be zero."
+        },
+        "self": {
+          "type": "string",
+          "format": "uri",
+          "description": "A unique reference to the customer resource."
+        }
+      }
+    },
+    "recipient": {
+      "type": "object",
+      "required": true,
+      "description": "The actual recipient of the quote. This may be the same info found on the customer (and will probably be so in most cases) but it may also be a different recipient. For instance, the customer placing the quote may be ACME Headquarters, but the recipient of the quote may be ACME IT.",
+      "properties": {
+        "name": {
+          "type": "string",
+          "maxLength": 250,
+          "required": true,
+          "description": "The name of the actual recipient."
+        },
+        "address": {
+          "type": "string",
+          "maxLength": 250,
+          "description": "The street address of the actual recipient."
+        },
+        "zip": {
+          "type": "string",
+          "maxLength": 50,
+          "description": "The zip code of the actual recipient."
+        },
+        "city": {
+          "type": "string",
+          "maxLength": 250,
+          "description": "The city of the actual recipient."
+        },
+        "country": {
+          "type": "string",
+          "maxLength": 50,
+          "description": "The country of the actual recipient."
+        },
+        "ean": {
+          "type": "string",
+          "maxLength": 13,
+          "description": "The 'European Article Number' of the actual recipient."
+        },
+        "publicEntryNumber": {
+          "type": "string",
+          "maxLength": 40,
+          "description": "The public entry number of the actual recipient."
+        },
+        "attention": {
+          "type": "object",
+          "description": "The person to whom this quote is addressed.",
+          "properties": {
+            "customerContactNumber": {
+              "type": "integer",
+              "description": "Unique identifier of the customer employee."
+            },
+            "self": {
+              "type": "string",
+              "format": "uri",
+              "description": "A unique reference to the customer employee."
+            }
+          }
+        },
+        "vatZone": {
+          "type": "object",
+          "required": true,
+          "description": "Recipient vat zone.",
+          "properties": {
+            "vatZoneNumber": {
+              "type": "integer",
+              "description": "Unique identifier of the vat zone."
+            },
+            "self": {
+              "type": "string",
+              "format": "uri",
+              "description": "A unique reference to the vat zone."
+            }
+          }
+        },
+        "mobilePhone": {
+          "type": "string",
+          "description": "The phone number the quote was sent to (if applicable)."
+        },
+        "nemHandelType": {
+          "enum": [ "ean", "corporateIdentificationNumber", "pNumber", "peppol", null ],
+					"description": "Chosen NemHandel type used for e-invoicing."
+        }
+      }
+    },
+    "deliveryLocation": {
+      "type": "object",
+      "description": "A reference to the place of delivery for the goods on the quote",
+      "properties": {
+        "deliveryLocationNumber": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "A unique identifier for the delivery location."
+        },
+        "self": {
+          "type": "string",
+          "format": "uri",
+          "description": "A unique reference to the delivery location resource."
+        }
+      }
+    },
+    "delivery": {
+      "type": "object",
+      "description": "The actual place of delivery for the goods on the quote. This is usually the same place as the one referenced in the deliveryLocation property, but may be edited as required.",
+      "properties": {
+        "address": {
+          "type": "string",
+          "maxLength": 255,
+          "description": "Street address where the goods must be delivered to the customer."
+        },
+        "zip": {
+          "type": "string",
+          "maxLength": 30,
+          "description": "The zip code of the place of delivery."
+        },
+        "city": {
+          "type": "string",
+          "maxLength": 50,
+          "description": "The city of the place of delivery"
+        },
+        "country": {
+          "type": "string",
+          "maxLength": 50,
+          "description": "The country of the place of delivery"
+        },
+        "deliveryTerms": {
+          "type": "string",
+          "maxLength": 100,
+          "description": "Details about the terms of delivery."
+        },
+        "deliveryDate": {
+          "type": "string",
+          "format": "full-date",
+          "pattern": "\\d{4}-\\d{2}-\\d{2}",
+          "description": "The date of delivery."
+        }
+      }
+    },
+    "notes": {
+      "type": "object",
+      "description": "Notes on the quote.",
+      "properties": {
+        "heading": {
+          "type": "string",
+          "maxLength": 250,
+          "description": "The quote heading. Usually displayed at the top of the quote."
+        },
+        "textLine1": {
+          "type": "string",
+          "maxLength": 1000,
+          "description": "The first line of supplementary text on the quote. This is usually displayed right under the heading in a smaller font."
+        },
+        "textLine2": {
+          "type": "string",
+          "maxLength": 1000,
+          "description": "The second line of supplementary text in the notes on the quote. This is usually displayed as a footer on the quote."
+        }
+      }
+    },
+    "references": {
+      "type": "object",
+      "description": "Customer and company references related to this quote.",
+      "properties": {
+        "customerContact": {
+          "type": "object",
+          "description": "The customer contact is a reference to the employee at the customer to contact regarding the quote.",
+          "properties": {
+            "customerContactNumber": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Unique identifier of the customer contact."
+            },
+            "self": {
+              "type": "string",
+              "format": "uri",
+              "description": "A unique reference to the customer contact resource."
+            }
+          }
+        },
+        "salesPerson": {
+          "type": "object",
+          "description": "The primary sales person is a reference to the employee who sold the goods on the quote.",
+          "properties": {
+            "employeeNumber": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Unique identifier of the employee."
+            },
+            "self": {
+              "type": "string",
+              "format": "uri",
+              "description": "A unique reference to the employee resource."
+            }
+          }
+        },
+        "vendorReference": {
+          "type": "object",
+          "description": "A reference to any second employee involved in the sale.",
+          "properties": {
+            "employeeNumber": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Unique identifier of the employee."
+            },
+            "self": {
+              "type": "string",
+              "format": "uri",
+              "description": "A unique reference to the employee resource."
+            }
+          }
+        },
+        "other": {
+          "type": "string",
+          "maxLength": 250,
+          "description": "A text field that can be used to save any custom reference on the quote."
+        }
+      }
+    },
+    "pdf": {
+      "type": "object",
+      "description": "References a pdf representation of this quote.",
+      "readonly": true,
+      "properties": {
+        "download": {
+          "type": "string",
+          "format": "uri",
+          "description": "The unique reference of the pdf representation for this draft quote."
+        }
+      }
+    },
+    "lines": {
+      "title": "quote lines",
+      "type": "array",
+      "description": "An array containing the specific quote lines.",
+      "items": {
+        "type": "object",
+        "description": "An array of the quote lines that make up the quote.",
+        "properties": {
+          "lineNumber": {
+            "type": "integer",
+            "description": "The line number is a unique number within the quote.",
+            "minimum": 1
+          },
+          "sortKey": {
+            "type": "integer",
+            "description": "A sort key used to sort the lines in ascending quote within the quote.",
+            "minimum": 1
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 2500,
+            "description": "A description of the product or service sold. Please note, that when setting existing products, description field is required. While setting non-existing product, description field can remain empty."
+          },
+          "accrual": {
+            "type": "object",
+            "description": "The accrual for the quote.",
+            "properties": {
+              "startDate": {
+                "type": "string",
+                "format": "full-date",
+                "pattern": "\\d{4}-\\d{2}-\\d{2}",
+                "description": "The start date for the accrual. Format: YYYY-MM-DD."
+              },
+              "endDate": {
+                "type": "string",
+                "format": "full-date",
+                "pattern": "\\d{4}-\\d{2}-\\d{2}",
+                "description": "The end date for the accrual. Format: YYYY-MM-DD."
+              }
+            }
+          },
+          "unit": {
+            "type": "object",
+            "description": "The unit of measure applied to the quote line.",
+            "properties": {
+              "unitNumber": {
+                "type": "integer",
+                "description": "The unique identifier of the unit.",
+                "minimum": 1
+              },
+              "self": {
+                "type": "string",
+                "format": "uri",
+                "description": "A unique reference to the unit resource."
+              }
+            }
+          },
+          "product": {
+            "type": "object",
+            "description": "The product or service offered on the quote line.",
+            "properties": {
+              "productNumber": {
+                "type": "string",
+                "maxLength": 25,
+                "description": "The unique product number. This can be a stock keeping unit identifier (SKU)."
+              },
+              "self": {
+                "type": "string",
+                "description": "A unique reference to the product resource."
+              }
+            }
+          },
+          "quantity": {
+            "type": "number",
+            "maxDecimal": 2,
+            "description": "The number of units of goods on the quote line."
+          },
+          "unitNetPrice": {
+            "type": "number",
+            "maxDecimal": 2,
+            "description": "The price of 1 unit of the goods or services on the quote line in the quote currency."
+          },
+          "discountPercentage": {
+            "type": "number",
+            "maxDecimal": 2,
+            "description": "A line discount expressed as a percentage."
+          },
+          "unitCostPrice": {
+            "type": "number",
+            "maxDecimal": 2,
+            "description": "The cost price of 1 unit of the goods or services in the quote currency."
+          },
+          "marginInBaseCurrency": {
+            "type": "number",
+            "maxDecimal": 2,
+            "description": "The difference between the net price and the cost price on the quote line in base currency."
+          },
+          "marginPercentage": {
+            "type": "number",
+            "maxDecimal": 2,
+            "description": "The margin on the quote line expressed as a percentage."
+          },
+          "departmentalDistribution": {
+            "type": "object",
+            "description": "A departmental distribution defines which departments this entry is distributed between. This requires the departments module to be enabled.",
+            "properties": {
+              "departmentalDistributionNumber": {
+                "type": "integer",
+                "minimum": 1,
+                "description": "A unique identifier of the departmental distribution."
+              },
+              "distributionType": {
+                "type": "string",
+                "description": "Type of the distribution"
+              },
+              "self": {
+                "type": "string",
+                "format": "uri",
+                "description": "A unique reference to the departmental distribution resource."
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

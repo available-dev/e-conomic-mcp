@@ -1,0 +1,49 @@
+{
+	"$schema": "http://json-schema.org/draft-03/schema#",
+	"title": "Units collection GET schema",
+	"description": "A schema for retrieval of a collection of units.",
+	"type": "object",
+	"restdocs": "http://restdocs.e-conomic.com/#get-units",
+	"properties": {
+		"collection": {
+			"type": "array",
+			"description": "The array containing all the units on the agreement.",
+			"items": {
+				"title": "Unit",
+				"type": "object",
+				"description": "A specific unit on the agreement.",
+				"properties": {
+					"unitNumber": {
+						"type": "integer",
+						"description": "A unique identifier of the unit."
+					},
+					"name": {
+						"type": "string",
+						"maxLength": 100,
+						"description": "The name of the unit."
+					},
+					"self": {
+						"type": "string",
+						"format": "uri",
+						"description": "A unique link reference to the unit item.",
+						"required": true
+					}
+				}
+			}
+		},
+		"metaData": {
+			"type": "object",
+			"description": "Information about possible actions, endpoints and resource paths related to the endpoint."
+		},
+		"pagination": {
+			"type": "object",
+			"description": "Information about the pagination."
+		},
+		"self": {
+			"type": "string",
+			"format": "uri",
+			"description": "The unique self reference of the units collection.",
+			"required": true
+		}
+	}
+}

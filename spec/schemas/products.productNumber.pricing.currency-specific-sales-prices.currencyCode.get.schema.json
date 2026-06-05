@@ -1,0 +1,68 @@
+{
+	"$schema": "http://json-schema.org/draft-03/schema#",
+	"title": "Product prices get schema",
+	"description": "A schema for getting a specific product price.",
+	"type": "object",
+	"restdocs": "http://restdocs.e-conomic.com/#get-products-productnumber-product-prices-currencycode",
+	"properties": {
+		"price": {
+			"required": true,
+			"type": "number",
+			"maxDecimal": 2,
+			"filterable": true,
+			"sortable": true,
+			"description": "The price of the product."
+		},
+		"product": {
+			"type": "object",
+			"description": "A reference to the product this product price belongs to.",
+			"properties": {
+				"productNumber": {
+					"required": true,
+					"type": "string",
+					"minLength": 1,
+					"maxLength": 25,
+					"filterable": true,
+					"sortable": true,
+					"description": "Unique alphanumeric product number."
+				},
+				"self": {
+					"type": "string",
+					"format": "uri",
+					"description": "A unique reference to the product resource.",
+					"required": true
+				}
+			}
+		},
+		"currency": {
+			"type": "object",
+			"description": "A reference to the currency this product price is in.",
+			"properties": {
+				"code": {
+					"type": "string",
+					"pattern": "[a-zA-Z]{3}",
+					"filterable": true,
+					"sortable": true,
+					"required": true,
+					"description": "The ISO 4217 currency code of the invoice."
+				},
+				"self": {
+					"type": "string",
+					"format": "uri",
+					"description": "A unique reference to the currency resource.",
+					"required": true
+				}
+			}
+		},
+		"metaData": {
+			"type": "object",
+			"description": "Information about possible actions, endpoints and resource paths related to the endpoint."
+		},
+		"self": {
+			"type": "string",
+			"format": "uri",
+			"description": "A unique reference to this product-prices resource.",
+			"required": true
+		}
+	}
+}

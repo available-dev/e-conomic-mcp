@@ -1,0 +1,130 @@
+{
+  "$schema": "http://json-schema.org/draft-03/schema#",
+  "title": "Draft invoice lines post schema",
+  "description": "A schema for creating a draft invoice lines.",
+  "type": "object",
+  "restdocs": "http://restdocs.e-conomic.com/#post-invoices-draft-lines",
+  "properties": {
+    "lines": {
+      "title": "Invoice lines",
+      "type": "array",
+      "description": "An array containing the specific invoice lines.",
+      "required": true,
+      "items": {
+        "type": "object",
+        "description": "An array of the invoice lines that make up the invoice.",
+        "properties": {
+          "sortKey": {
+            "type": "integer",
+            "description": "A sort key used to sort the lines in ascending order within the invoice.",
+            "minimum": 1
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 2500,
+            "description": "A description of the product or service sold. Please note, that when setting existing products, description field is required. While setting non-existing product, description field can remain empty."
+          },
+          "accrual": {
+            "type": "object",
+            "description": "The accrual for the invoice.",
+            "properties": {
+              "startDate": {
+                "type": "string",
+                "format": "full-date",
+                "pattern": "\\d{4}-\\d{2}-\\d{2}",
+                "description": "The start date for the accrual. Must be within an existing accounting year. Format: YYYY-MM-DD."
+              },
+              "endDate": {
+                "type": "string",
+                "format": "full-date",
+                "pattern": "\\d{4}-\\d{2}-\\d{2}",
+                "description": "The end date for the accrual. Format: YYYY-MM-DD."
+              }
+            }
+          },
+          "unit": {
+            "type": "object",
+            "description": "The unit of measure applied to the invoice line.",
+            "properties": {
+              "unitNumber": {
+                "type": "integer",
+                "description": "The unique identifier of the unit.",
+                "minimum": 1
+              },
+              "self": {
+                "type": "string",
+                "format": "uri",
+                "description": "A unique reference to the unit resource."
+              }
+            }
+          },
+          "product": {
+            "type": "object",
+            "description": "The product or service offered on the invoice line.",
+            "properties": {
+              "productNumber": {
+                "type": "string",
+                "maxLength": 25,
+                "description": "The unique product number. This can be a stock keeping unit identifier (SKU)."
+              },
+              "self": {
+                "type": "string",
+                "description": "A unique reference to the product resource."
+              }
+            }
+          },
+          "quantity": {
+            "type": "number",
+            "maxDecimal": 2,
+            "description": "The number of units of goods on the invoice line."
+          },
+          "unitNetPrice": {
+            "type": "number",
+            "maxDecimal": 2,
+            "description": "The price of 1 unit of the goods or services on the invoice line in the invoice currency."
+          },
+          "discountPercentage": {
+            "type": "number",
+            "maxDecimal": 2,
+            "description": "A line discount expressed as a percentage."
+          },
+          "unitCostPrice": {
+            "type": "number",
+            "maxDecimal": 2,
+            "description": "The cost price of 1 unit of the goods or services in the invoice currency."
+          },
+          "marginInBaseCurrency": {
+            "type": "number",
+            "maxDecimal": 2,
+            "description": "The difference between the net price and the cost price on the invoice line in base currency."
+          },
+          "marginPercentage": {
+            "type": "number",
+            "maxDecimal": 2,
+            "description": "The margin on the invoice line expressed as a percentage."
+          },
+          "departmentalDistribution": {
+            "type": "object",
+            "description": "A departmental distribution defines which departments this entry is distributed between. This requires the departments module to be enabled.",
+            "properties": {
+              "departmentalDistributionNumber": {
+                "type": "integer",
+                "minimum": 1,
+                "description": "A unique identifier of the departmental distribution."
+              },
+              "distributionType": {
+                "type": "string",
+                "description": "Type of the distribution"
+              },
+              "self": {
+                "type": "string",
+                "format": "uri",
+                "description": "A unique reference to the departmental distribution resource."
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

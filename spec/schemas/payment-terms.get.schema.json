@@ -1,0 +1,123 @@
+{
+	"$schema": "http://json-schema.org/draft-03/schema#",
+	"title": "Payment terms collection GET schema",
+	"description": "A schema for retrieval of a collection of payment terms.",
+	"type": "object",
+	"restdocs": "http://restdocs.e-conomic.com/#get-payment-terms",
+	"properties": {
+		"collection": {
+			"type": "array",
+			"description": "The array containing all the payment terms on the agreement.",
+			"items": {
+				"title": "Payment terms",
+				"type": "object",
+				"description": "A specific payment term on the agreement.",
+				"properties": {
+					"paymentTermsNumber": {
+						"type": "integer",
+						"description": "A unique identifier of the payment term."
+					},
+					"daysOfCredit": {
+						"type": "integer",
+						"description": "The number of days before payment must be made."
+					},
+					"description": {
+						"type": "string",
+						"maxLength": 1000,
+						"description": "A description of the payment term."
+					},
+					"name": {
+						"type": "string",
+						"maxLength": 50,
+						"description": "The name of the payment term."
+					},
+					"paymentTermsType": {
+						"enum": ["net", "invoiceMonth", "paidInCash", "prepaid", "dueDate", "factoring", "invoiceWeekStartingSunday", "invoiceWeekStartingMonday", "creditcard"],
+						"required": true,
+						"description": "The type of payment term."
+					},
+					"contraAccountForPrepaidAmount": {
+						"type": "object",
+						"description": "The contra account for prepaid amount of the payment term.",
+						"properties": {
+							"accountNumber": {
+								"type": "integer",
+								"description": "The account number for the contraAccountForPrepaidAmount."
+							},
+							"self": {
+								"type": "string",
+								"format": "uri",
+								"description": "A unique link reference to the contra account for prepaid amount item.",
+								"required": true
+							}
+						}
+					},
+					"contraAccountForRemainderAmount": {
+						"type": "object",
+						"description": "The contra account for remainder amount of the payment term.",
+						"properties": {
+							"accountNumber": {
+								"type": "integer",
+								"description": "The account number for the contraAccountForRemainderAmount."
+							},
+							"self": {
+								"type": "string",
+								"format": "uri",
+								"description": "A unique link reference to the contra account for remainder amount item.",
+								"required": true
+							}
+						}
+					},
+					"percentageForPrepaidAmount": {
+						"type": "number",
+						"maxDecimal": 2,
+						"description": "The % to be pre paid."
+					},
+					"percentageForRemainderAmount": {
+						"type": "number",
+						"maxDecimal": 2,
+						"description": "The % to be post paid."
+					},
+					"creditCardCompany": {
+						"type": "object",
+						"description": "The credit card company of the payment term.",
+						"properties": {
+							"customerNumber": {
+								"type": "integer",
+								"description": "The credit card company customer number.",
+								"maximum": 999999999,
+								"minimum": 1
+							},
+							"self": {
+								"type": "string",
+								"format": "uri",
+								"description": "A unique link reference to the credit card company customer item.",
+								"required": true
+							}
+						}
+					},
+					"self": {
+						"type": "string",
+						"format": "uri",
+						"description": "A unique link reference to the payment term item.",
+						"required": true
+					}
+				}
+			}
+		},
+		"metaData": {
+			"type": "object",
+			"description": "Information about possible actions, endpoints and resource paths related to the endpoint."
+		},
+		"pagination": {
+			"type": "object",
+			"description": "Information about the pagination."
+		},
+		"self": {
+			"type": "string",
+			"format": "uri",
+			"description": "The unique self reference of the units collection.",
+			"required": true
+		}
+	}
+}

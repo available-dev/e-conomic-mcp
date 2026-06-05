@@ -1,0 +1,15 @@
+{
+	"$schema": "http://json-schema.org/draft-03/schema#",
+	"title": "Units create schema",
+	"description": "A schema for creating a new unit.",
+	"type": "object",
+	"restdocs": "http://restdocs.e-conomic.com/#post-units",
+	"properties": {
+		"name": {
+			"required": true,
+			"type": "string",
+			"maxLength": 100,
+			"description": "The name of the unit."
+		}
+	}
+}

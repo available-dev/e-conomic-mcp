@@ -1,0 +1,71 @@
+{
+	"$schema": "http://json-schema.org/draft-03/schema#",
+	"title": "Sent Invoice GET Schema",
+	"description": "A schema for retrieving a sent invoice.",
+	"type": "object",
+	"restdocs": "http://restdocs.e-conomic.com/#get-invoices-sent-id",
+	"properties": {
+		"id": {
+			"type": "integer",
+			"description": "The unique identifier"
+		},
+		"invoice": {
+			"type": "object",
+			"description": "A reference to the booked invoice that was sent.",
+			"properties": {
+				"bookedInvoiceNumber": {
+					"type": "integer",
+					"description": "The number of the booked invoice."
+				},
+				"self": {
+					"type": "string",
+					"format": "uri",
+					"description": "The unique self reference of the booked invoice resource.",
+					"required": true
+				}
+			}
+		},
+		"status": {
+			"type": "string",
+			"description": "The status of the sent invoice."
+		},
+		"sendBy": {
+			"enum": ["mobilePay", "ean"],
+			"description": "The e-invoicing channel through which this invoice was sent."
+		},
+		"creationDate": {
+			"type": "string",
+			"format": "date",
+			"pattern": "\\d{4}-\\d{2}-\\d{2}",
+			"description": "The date that the invoice was sent."
+		},
+		"createdBy": {
+			"type": "string",
+			"description": "The e-conomic user that booked and sent the invoice."
+		},
+		"recipient": {
+			"type": "object",
+			"description": "The recipient of the invoice.",
+			"properties": {
+				"name": {
+					"type": "string",
+					"description": "The name of the recipient (if applicable)."
+				},
+				"mobilePhone": {
+					"type": "string",
+					"description": "The phone number the invoice was sent to (if applicable)."
+				},
+				"ean": {
+					"type": "string",
+					"description": "The EAN number the invoice was sent to (if applicable)."
+				}
+			}
+		},
+		"self": {
+			"type": "string",
+			"format": "uri",
+			"description": "The unique self reference of the sent invoice resource.",
+			"required": true
+		}
+	}
+}

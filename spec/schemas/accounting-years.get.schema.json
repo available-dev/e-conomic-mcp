@@ -1,0 +1,88 @@
+{
+	"$schema": "http://json-schema.org/draft-03/schema#",
+	"title": "Accounting years collection GET schema",
+	"description": "A schema for retrieval of a collection of accounting years.",
+	"type": "object",
+	"restdocs": "http://restdocs.e-conomic.com/#get-accounting-years",
+	"properties": {
+		"collection": {
+			"type": "array",
+			"description": "The array containing all the accounting years on the agreement.",
+			"items": {
+				"title": "Accounting year",
+				"type": "object",
+				"description": "A specific accounting year on the agreement.",
+				"properties": {
+					"fromDate": {
+						"type": "string",
+						"format": "full-date",
+						"pattern": "\\d{4}-\\d{2}-\\d{2}",
+						"sortable": true,
+						"filterable": true,
+						"defaultsorting": "ascending",
+						"description": "The first date in the accounting year in the format YYYY-MM-DD. Except for the first accounting year on an agreement, it must be the date immediately following the previous accounting year, and thus must be the first day of a month. The first accounting year on an agreement can begin on any day of the month."
+					},
+					"toDate": {
+						"type": "string",
+						"format": "full-date",
+						"pattern": "\\d{4}-\\d{2}-\\d{2}",
+						"sortable": true,
+						"filterable": true,
+						"description": "The last date in the accounting year in the format YYYY-MM-DD. It must be the last date in the last month of the accounting year. An accounting year can at most have a duration of 18 months."
+					},
+					"closed": {
+						"type": "boolean",
+						"description": "Determines if the accounting year is closed for further transactions."
+					},
+					"year": {
+						"type": "string",
+						"pattern": "^(19|20)\\d{2}([a-j])?|^(19|20)\\d{2}(/(19|20)\\d{2})?",
+						"sortable": true,
+						"filterable": true,
+						"description": "The calendar year or years spanned by the accounting year in the format YYYY or YYYY/YYYY."
+					},
+					"periods": {
+						"type": "string",
+						"format": "uri",
+						"description": "A link to the collection of accounting year periods on an agreement."
+					},
+					"entries": {
+						"type": "string",
+						"format": "uri",
+						"description": "A link to a collection of all entries booked in the accounting year."
+					},
+					"totals": {
+						"type": "string",
+						"format": "uri",
+						"description": "A link to the chart of accounts with the years total in base currency."
+					},
+					"vouchers": {
+						"type": "string",
+						"format": "uri",
+						"description": "A link to a collection of vouchers created in the accounting year."
+					},
+					"self": {
+						"type": "string",
+						"format": "uri",
+						"description": "A unique link reference to the accounting year item.",
+						"required": true
+					}
+				}
+			}
+		},
+		"metaData": {
+			"type": "object",
+			"description": "Information about possible actions, endpoints and resource paths related to the endpoint."
+		},
+		"pagination": {
+			"type": "object",
+			"description": "Information about the pagination."
+		},
+		"self": {
+			"type": "string",
+			"format": "uri",
+			"description": "The unique self reference of the accounting years collection.",
+			"required": true
+		}
+	}
+}

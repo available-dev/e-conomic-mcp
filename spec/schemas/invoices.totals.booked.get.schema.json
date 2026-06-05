@@ -1,0 +1,66 @@
+{
+	"$schema": "http://json-schema.org/draft-03/schema#",
+	"title": "Booked invoice totals GET schema",
+	"description": "A schema for retrieval of the totals of booked invoices.",
+	"type": "object",
+	"restdocs": "http://restdocs.e-conomic.com/#get-invoices-totals-booked",
+	"properties": {
+		"netAmountInBaseCurrency": {
+			"type": "number",
+			"maxDecimal": 2,
+			"description": "The total invoice amount for all booked invoices in the base currency of the agreement before all taxes and discounts have been applied."
+		},
+		"invoiceCount": {
+			"type": "integer",
+			"description": "The number of booked invoices."
+		},
+		"maxDate": {
+			"type": "string",
+			"format": "full-date",
+			"pattern": "\\d{4}-\\d{2}-\\d{2}",
+			"description": "The latest date of any booked invoice."
+		},
+		"minDate": {
+			"type": "string",
+			"format": "full-date",
+			"pattern": "\\d{4}-\\d{2}-\\d{2}",
+			"description": "The earliest date of any booked invoice."
+		},
+		"customers": {
+			"type": "string",
+			"format": "uri",
+			"description": "A reference to the invoices totals booked customer resource."
+		},
+		"accountingYears": {
+			"type": "string",
+			"format": "uri",
+			"description": "A reference to the invoices totals booked accounting years resource."
+		},
+		"periods": {
+			"type": "string",
+			"format": "uri",
+			"description": "A reference to the invoices totals booked periods resource."
+		},
+		"employees": {
+			"type": "string",
+			"format": "uri",
+			"description": "A reference to the invoices totals booked employees resource."
+		},
+		"paid": {
+			"type": "string",
+			"format": "uri",
+			"description": "A reference to the invoices totals booked paid resource."
+		},
+		"unpaid": {
+			"type": "string",
+			"format": "uri",
+			"description": "A reference to the invoices totals booked unpaid resource."
+		},
+		"self": {
+			"type": "string",
+			"format": "uri",
+			"description": "A reference to the invoices totals booked resource.",
+			"required": true
+		}
+	}
+}

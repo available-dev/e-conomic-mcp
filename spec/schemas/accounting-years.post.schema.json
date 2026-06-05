@@ -1,0 +1,22 @@
+{
+	"$schema": "http://json-schema.org/draft-03/schema#",
+	"title": "Accounting years POST schema",
+	"description": "A schema for creating an accounting year.",
+	"type": "object",
+	"restdocs": "http://restdocs.e-conomic.com/#post-accounting-years",
+	"properties": {
+		"fromDate": {
+			"type": "string",
+			"required": true,
+			"format": "full-date",
+			"pattern": "\\d{4}-\\d{2}-\\d{2}",
+			"description": "The first date in the accounting year in the format YYYY-MM-DD. Except for the first accounting year on an agreement, it must be the date immediately following the previous accounting year, and thus must be the first day of a month. The first accounting year on an agreement can begin on any day of the month."
+		},
+		"toDate": {
+			"type": "string",
+			"required": true,
+			"format": "full-date",
+			"description": "The last date in the accounting year in the format YYYY-MM-DD. It must be the last date in the last month of the accounting year. An accounting year can at most have a duration of 18 months."
+		}
+	}
+}

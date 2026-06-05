@@ -1,0 +1,536 @@
+{
+	"$schema": "http://json-schema.org/draft-03/schema#",
+	"title": "Journals schema for GETing entries",
+	"description": "A schema for retrieving entries on given journal.",
+	"type": "object",
+	"restdocs": "http://restdocs.e-conomic.com/#get-journals-journalnumber-entries",
+	"properties": {
+		"collection": {
+			"type": "array",
+			"description": "The array containing all entries on given journal.",
+			"items": {
+				"title": "Journal entry",
+				"type": "object",
+				"description": "A specific journal entry.",
+				"properties": {
+					"account": {
+						"type": "object",
+						"description": "The account used by the entry.",
+						"properties": {
+              "accountNumber": {
+                "type": "integer",
+                "minimum": 1,
+                "description": "The account number.",
+                "sortable": true,
+                "filterable": true
+              },
+							"self": {
+								"type": "string",
+								"format": "uri",
+								"description": "A unique reference to the account resource.",
+								"required": true
+							}
+						}
+					},
+					"templates": {
+						"type": "object",
+						"description": "Templates allowing easy entry creation, its existance depends on the type of the entry.",
+						"properties": {
+							"customerPayment": {
+								"type": "string",
+								"format": "uri",
+								"description": "The unique reference to the finance voucher template"
+							},
+							"account": {
+								"type": "string",
+								"format": "uri",
+								"description": "The unique reference to the finance voucher template using account"
+							},
+							"contraAccount": {
+								"type": "string",
+								"format": "uri",
+								"description": "The unique reference to the finance voucher template using contra account"
+							},
+							"accountAndContraAccount": {
+								"type": "string",
+								"format": "uri",
+								"description": "The unique reference to the finance voucher template using account and contra account"
+							}
+						}
+					},
+					"journal": {
+						"type": "object",
+						"description": "The journal the entry belongs to.",
+						"properties": {
+							"journalNumber": {
+								"type": "number",
+								"description": "Journal number that must be at least 1.",
+								"minimum": 1
+							},
+							"self": {
+								"type": "string",
+								"format": "uri",
+								"description": "A unique reference to the journal resource.",
+								"required": true
+							}
+						}
+					},
+					"customer": {
+						"type": "object",
+						"description": "The customer this entry is based on. Either 'customer' or 'contraAccount' is required.",
+						"properties": {
+              "customerNumber": {
+                "type": "integer",
+                "maximum": 999999999,
+                "minimum": 1,
+                "description": "The customer number is a positive unique numerical identifier with a maximum of 9 digits.",
+                "sortable": true,
+                "filterable": true
+              },
+							"self": {
+								"type": "string",
+								"format": "uri",
+								"description": "A unique reference to the customer resource.",
+								"required": true
+							}
+						}
+					},
+					"customerInvoice": {
+						"type": "integer",
+						"minimum": 1,
+						"description": "Customer invoice number."
+					},
+					"supplier": {
+						"type": "object",
+						"description": "The supplier this entry is based on.",
+						"properties": {
+              "supplierNumber": {
+                "type": "integer",
+                "description": "The supplier number is a positive unique numerical identifier with a maximum of 9 digits.",
+                "maximum": 999999999,
+                "minimum": 1,
+                "sortable": true,
+                "filterable": true
+              },
+							"self": {
+								"type": "string",
+								"format": "uri",
+								"description": "A unique reference to the supplier resource.",
+								"required": true
+							}
+						}
+					},
+					"supplierInvoiceNumber": {
+						"type": "string",
+						"maxLength": 30,
+						"description": "The unique identifier of the supplier invoice gotten from the supplier."
+					},
+					"paymentDetails": {
+						"type": "object",
+						"description": "Payment details associated with the supplier invoice. Each payment detail contains two keys that are required. For the +71 type, fiSupplierNo and ocrLine is expected. For the +73 type, fiSupplierNo and message is expected. For the +04 type, giroAccount and ocrLine is expected. For the bank transfer type, accountNo and message is expected. For the IBAN type, ibanSwift and message is expected. For the +75 type, fiSupplierNo and ocrLineMessage is expected. Please refer to the schema for validation rules details.",
+						"properties": {
+							"paymentType": {
+								"type": "object",
+								"description": "A specific payment type on the entry.",
+								"oneOf": [{
+									"properties": {
+										"fiSupplierNo": {
+											"type": "string",
+											"required": true
+										},
+										"ocrLine": {
+											"type": "string",
+											"minLength": 15,
+											"maxLength": 15,
+											"required": true
+										}
+									}
+								}, {
+									"properties": {
+										"fiSupplierNo": {
+											"type": "string",
+											"required": true
+										},
+										"message": {
+											"type": "string",
+											"minLength": 5,
+											"maxLength": 100,
+											"required": true
+										}
+									}
+								}, {
+									"properties": {
+										"giroAccount": {
+											"type": "string",
+											"required": true
+										},
+										"ocrLine": {
+											"type": "string",
+											"minLength": 16,
+											"maxLength": 16,
+											"required": true
+										}
+									}
+								}, {
+									"properties": {
+										"accountNo": {
+											"type": "string",
+											"required": true
+										},
+										"message": {
+											"type": "string",
+											"minLength": 5,
+											"maxLength": 100,
+											"required": true
+										}
+									}
+								}, {
+									"properties": {
+										"ibanSwift": {
+											"type": "string",
+											"required": true
+										},
+										"message": {
+											"type": "string",
+											"minLength": 5,
+											"maxLength": 100,
+											"required": true
+										}
+									}
+								}, {
+									"properties": {
+										"fiSupplierNo": {
+											"type": "string",
+											"required": true
+										},
+										"ocrLineMessage": {
+											"type": "string",
+											"minLength": 16,
+											"maxLength": 157,
+											"required": true
+										}
+									}
+								}],
+								"properties": {
+									"paymentTypeNumber": {
+										"type": "integer",
+										"minimum": 1,
+										"description": "The payment type number is a positive unique numerical identifier."
+									},
+									"self": {
+										"type": "string",
+										"format": "uri",
+										"description": "A unique link reference to the payment type item.",
+										"required": true
+									}
+								}
+							}
+						}
+					},
+					"dueDate": {
+						"type": "string",
+						"format": "full-date",
+						"pattern": "\\d{4}-\\d{2}-\\d{2}",
+						"description": "The date the entry is due for payment. Format according to ISO-8601 (YYYY-MM-DD)."
+					},
+					"text": {
+						"type": "string",
+						"sortable": true,
+						"filterable": true,
+						"description": "Text on the entry"
+					},
+					"amount": {
+						"type": "number",
+						"maxDecimal": 2,
+						"sortable": true,
+						"filterable": true
+					},
+					"contraAccount": {
+						"type": "object",
+						"description": "The account used for the funds. Either 'customer' or 'contraAccount' is required.",
+						"properties": {
+							"accountNumber": {
+								"type": "integer",
+								"sortable": true,
+								"filterable": true,
+								"minimum": 1,
+								"description": "The account number."
+							},
+							"self": {
+								"type": "string",
+								"format": "uri",
+								"description": "A unique reference to the account resource.",
+								"required": true
+							}
+						}
+					},
+					"contraVatAccount": {
+						"type": "object",
+						"description": "The account for VAT.",
+						"properties": {
+							"vatCode": {
+								"type": "string",
+								"maxLength": 5,
+								"sortable": true,
+								"filterable": true,
+								"description": "The unique identifier of the contra vat account."
+							},
+							"self": {
+								"type": "string",
+								"format": "uri",
+								"description": "A unique link reference to the contraVatAccount item.",
+								"required": true
+							}
+						}
+					},
+					"contraVatAmount": {
+						"type": "number",
+						"maxDecimal": 2,
+						"sortable": true,
+						"filterable": true,
+						"description": "The amount of VAT on the entry on the contra account."
+					},
+					"contraVatAmountInBaseCurrency": {
+						"type": "number",
+						"maxDecimal": 2,
+						"description": "The amount of VAT on the entry on the contra account in base currency."
+					},
+					"costType": {
+						"type": "object",
+						"description": "The cost type for this entity.",
+						"properties": {
+							"costTypeNumber": {
+								"type": "integer",
+								"description": "The unique identifier of the cost type."
+							},
+							"self": {
+								"type": "string",
+								"format": "uri",
+								"description": "A unique link reference to the cost type.",
+								"required": false
+							}
+						}
+					},
+					"currency": {
+						"type": "object",
+						"description": "The currency for the entry.",
+						"properties": {
+							"code": {
+								"type": "string",
+								"pattern": "[a-zA-Z]{3}",
+								"sortable": true,
+								"filterable": true,
+								"description": "The ISO 4217 3-letter currency code of the entry."
+							},
+							"self": {
+								"type": "string",
+								"format": "uri",
+								"description": "A unique link reference to the currency item.",
+								"required": true
+							}
+						}
+					},
+					"date": {
+						"type": "string",
+						"format": "full-date",
+						"pattern": "\\d{4}-\\d{2}-\\d{2}",
+						"sortable": true,
+						"filterable": true,
+						"description": "Entry date. Format according to ISO-8601 (YYYY-MM-DD)."
+					},
+					"departmentalDistribution": {
+						"type": "object",
+						"description": "A departmental distribution defines which departments this entry is distributed between. This requires the departments module to be enabled.",
+						"properties": {
+							"departmentalDistributionNumber": {
+								"type": "integer",
+								"minimum": 1,
+								"description": "A unique identifier of the departmental distribution."
+							},
+							"distributionType": {
+								"type": "string",
+								"description": "Type of the distribution"
+							},
+							"self": {
+								"type": "string",
+								"format": "uri",
+								"description": "A unique reference to the departmental distribution resource."
+							}
+						}
+					},
+					"employee": {
+						"type": "object",
+						"description": "Employee that this entry is related to. Requires Project module",
+						"properties": {
+							"employeeNumber": {
+								"type": "integer",
+								"minimum": 1,
+								"sortable": true,
+								"filterable": true,
+								"description": "A unique numerical identifier with a maximum of 9 digits."
+							},
+							"self": {
+								"type": "string",
+								"format": "uri",
+								"description": "A unique link reference to the employee item.",
+								"required": true
+							}
+						}
+					},
+					"exchangeRate": {
+						"type": "number",
+						"maxDecimals": 6,
+						"sortable": true,
+						"filterable": true,
+						"description": "The exchange rate between the base currency and the invoice currency."
+					},
+					"entryType": {
+						"enum": ["financeVoucher", "supplierInvoice", "supplierPayment", "customerPayment", "manualCustomerInvoice"],
+						"sortable": true,
+						"filterable": true,
+						"description": "Entry type of the entry."
+					},
+					"voucher": {
+						"type": "object",
+						"description": "Voucher that the entry belongs to.",
+						"properties": {
+							"accountingYear": {
+								"type": "object",
+								"description": "The accounting year the voucher belongs to. Together with the voucherNumber it is a unique identifier for the voucher.",
+								"properties": {
+									"year": {
+										"type": "string",
+										"description": "A unique identifier of the accounting year."
+									},
+									"self": {
+										"type": "string",
+										"format": "uri",
+										"description": "A unique reference to the accounting year resource.",
+										"required": true
+									}
+								}
+							},
+							"voucherNumber": {
+								"type": "number",
+								"minimum": 1,
+								"maximum": 999999999,
+								"sortable": true,
+								"filterable": true,
+								"description": "Journal voucher number that must be at least 1."
+							},
+							"self": {
+								"type": "string",
+								"format": "uri",
+								"description": "A unique link reference to the voucher item.",
+								"required": true
+							}
+						}
+					},
+					"project": {
+						"type": "object",
+						"description": "The project the entry is connected to.",
+						"properties": {
+							"projectNumber": {
+								"type": "integer",
+								"description": "A unique identifier of the project."
+							},
+							"self": {
+								"type": "string",
+								"format": "uri",
+								"description": "A unique reference to the project resource.",
+								"required": false
+							}
+						}
+					},
+					"amountDefaultCurrency": {
+						"type": "number",
+						"maxDecimal": 2,
+						"sortable": true,
+						"filterable": true,
+						"description": "The amount of VAT on the entry on the contra account in base currency."
+					},
+					"remainder": {
+						"type": "number",
+						"maxDecimal": 2,
+						"readonly": true,
+						"description": "Remaining amount to be paid."
+					},
+					"remainderInDefaultCurrency": {
+						"type": "number",
+						"maxDecimal": 2,
+						"readonly": true,
+						"description": "Remaining amount to be paid in default currency."
+					},
+					"journalEntryNumber": {
+						"type": "integer",
+						"sortable": true,
+						"filterable": true,
+						"description": "Unique journal number"
+					},
+					"quantity1": {
+						"type": "number",
+						"maxDecimal": 2,
+						"description": "Requires dimension module."
+					},
+					"quantity2": {
+						"type": "number",
+						"maxDecimal": 2,
+						"description": "Requires dimension module."
+					},
+					"unit1": {
+						"type": "object",
+						"description": "The first unit of measure applied to the entry. Requires dimension module.",
+						"properties": {
+							"unitNumber": {
+								"type": "integer",
+								"description": "The unique identifier of the unit.",
+								"minimum": 0
+							},
+							"self": {
+								"type": "string",
+								"format": "uri",
+								"description": "A unique reference to the unit resource."
+							}
+						}
+					},
+					"unit2": {
+						"type": "object",
+						"description": "The second unit of measure applied to the entry. Requires dimension module.",
+						"properties": {
+							"unitNumber": {
+								"type": "integer",
+								"description": "The unique identifier of the unit.",
+								"minimum": 0
+							},
+							"self": {
+								"type": "string",
+								"format": "uri",
+								"description": "A unique reference to the unit resource."
+							}
+						}
+					},
+					"self": {
+						"type": "string",
+						"format": "uri",
+						"description": "A unique link reference to the entry.",
+						"required": true
+					}
+				}
+			}
+		},
+		"metaData": {
+			"type": "object",
+			"description": "Information about possible actions, endpoints and resource paths related to the endpoint."
+		},
+		"pagination": {
+			"type": "object",
+			"description": "Information about the pagination."
+		},
+		"self": {
+			"type": "string",
+			"format": "uri",
+			"description": "The unique self reference of the journal entries collection.",
+			"required": true
+		}
+	}
+}

@@ -1,0 +1,28 @@
+{
+	"$schema": "http://json-schema.org/draft-03/schema#",
+	"title": "Layout GET schema",
+	"description": "A schema for retrieval of a single layout.",
+	"type": "object",
+	"restdocs": "http://restdocs.e-conomic.com/#get-layouts-layoutnumber",
+	"properties": {
+		"layoutNumber": {
+			"type": "integer",
+			"description": "A unique identifier of the layout."
+		},
+		"name": {
+			"type": "string",
+			"maxLength": 250,
+			"description": "The name of the layout."
+		},
+		"deleted": {
+			"type": "boolean",
+			"description": "A flag indicating that the layout is deleted. Layouts with this flag set will not appear in the collection of layouts, but resources such as booked invoices might still reference this layout."
+		},
+		"self": {
+			"type": "string",
+			"format": "uri",
+			"description": "A unique link reference to the layout item.",
+			"required": true
+		}
+	}
+}

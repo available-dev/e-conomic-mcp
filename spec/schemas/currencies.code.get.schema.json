@@ -1,0 +1,30 @@
+{
+	"$schema": "http://json-schema.org/draft-03/schema#",
+	"title": "Currencies collection Schema",
+	"description": "A schema for retrieving a collection of currencies.",
+	"type": "object",
+	"restdocs": "http://restdocs.e-conomic.com/#get-currencies-code",
+	"properties": {
+		"name": {
+			"type": "string",
+			"maxLength": 50,
+			"description": "The name of the currency."
+		},
+		"code": {
+			"type": "string",
+			"maxLength": 3,
+			"description": "The ISO 4217 code of the currency."
+		},
+		"isoNumber": {
+			"type": "string",
+			"maxLength": 3,
+			"description": "The ISO 4217 numeric code of the currency."
+		},
+		"self": {
+			"type": "string",
+			"format": "uri",
+			"description": "The unique self reference of the currency resource.",
+			"required": true
+		}
+	}
+}

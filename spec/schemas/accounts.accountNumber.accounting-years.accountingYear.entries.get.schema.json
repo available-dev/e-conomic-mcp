@@ -1,0 +1,425 @@
+{
+	"$schema": "http://json-schema.org/draft-03/schema#",
+	"title": "Entries collection schema",
+	"description": "A schema for retrieving the entries for a specific accounting years.",
+	"type": "object",
+	"restdocs": "http://restdocs.e-conomic.com/#get-accounts-accountnumber-accounting-years-accountingyear-entries",
+	"properties": {
+		"collection": {
+			"type": "array",
+			"description": "A collection of entries.",
+			"items": {
+				"title": "Entry",
+				"type": "object",
+				"description": "A specific entry in the accounting year.",
+				"properties": {
+					"account": {
+						"type": "object",
+						"description": "The account the entry is connected to.",
+						"properties": {
+							"accountNumber": {
+								"type": "integer",
+								"minimum": 1,
+								"description": "A unique identifier of the account."
+							},
+							"self": {
+								"type": "string",
+								"format": "uri",
+								"description": "A unique reference to the account resource.",
+								"required": true
+							}
+						}
+					},
+					"amount": {
+						"type": "number",
+						"maxDecimal": 2,
+						"filterable": true,
+						"sortable": true,
+						"description": "The total entry amount."
+					},
+					"supplierInvoiceNumber": {
+						"type": "string",
+						"filterable": true,
+						"sortable": true,
+						"description": "A unique identifier of the supplier invoice."
+					},
+					"amountInBaseCurrency": {
+						"type": "number",
+						"maxDecimal": 2,
+						"filterable": true,
+						"sortable": true,
+						"description": "The total entry amount in base currency."
+					},
+					"currency": {
+						"type": "string",
+						"pattern": "[a-zA-Z]{3}",
+						"filterable": true,
+						"sortable": true,
+						"description": "The ISO 4217 currency code of the entry."
+					},
+					"date": {
+						"type": "string",
+						"format": "full-date",
+						"pattern": "\\d{4}-\\d{2}-\\d{2}",
+						"filterable": true,
+						"sortable": true,
+						"description": "Entry issue date. The date is formatted according to ISO-8601(YYYY-MM-DD)."
+					},
+					"dueDate": {
+						"type": "string",
+						"format": "full-date",
+						"pattern": "\\d{4}-\\d{2}-\\d{2}",
+						"filterable": true,
+						"sortable": true,
+						"description": "The date the invoice is due for payment. Format according to ISO-8601 (YYYY-MM-DD)."
+					},
+					"departmentalDistribution": {
+						"type": "object",
+						"description": "A departmental distribution defines which departments this entry is distributed between. This requires the departments module to be enabled.",
+						"properties": {
+							"departmentalDistributionNumber": {
+								"type": "integer",
+								"minimum": 1,
+								"description": "A unique identifier of the departmental distribution."
+							},
+							"self": {
+								"type": "string",
+								"format": "uri",
+								"description": "A unique reference to the departmental distribution resource.",
+								"required": true
+							}
+						}
+					},
+					"project": {
+						"type": "object",
+						"description": "A reference to any project this entry might be related to. This requires the projects module to be enabled.",
+						"properties": {
+							"projectNumber": {
+								"type": "integer",
+								"minimum": 1,
+								"description": "A unique identifier of the project."
+							},
+							"self": {
+								"type": "string",
+								"format": "uri",
+								"description": "A unique reference to the project resource.",
+								"required": true
+							}
+						}
+					},
+					"costType": {
+						"type": "object",
+						"description": "The cost type for this entity.",
+						"properties": {
+							"costTypeNumber": {
+								"type": "integer",
+								"description": "The unique identifier of cost type.",
+								"maximum": 999999999,
+								"minimum": 1,
+								"filterable": true,
+								"sortable": true
+							},
+							"self": {
+								"type": "string",
+								"format": "uri",
+								"description": "A unique link reference to the cost type.",
+								"required": true
+							}
+						}
+					},
+					"entryNumber": {
+						"type": "integer",
+						"filterable": true,
+						"sortable": true,
+						"description": "The unique identifier of the entry line."
+					},
+					"text": {
+						"type": "string",
+						"maxLength": 255,
+						"filterable": true,
+						"sortable": true,
+						"description": "A short description about the entry."
+					},
+					"entryType": {
+						"enum": [ "customerInvoice", "customerPayment", "supplierInvoice", "supplierPayment", "financeVoucher", "reminder", "openingEntry", "transferredOpeningEntry", "systemEntry", "manualDebtorInvoice" ],
+						"filterable": true,
+						"sortable": true,
+						"description": "The type of entry."
+					},
+					"vatAccount": {
+						"type": "object",
+						"description": "The account for VAT.",
+						"properties": {
+							"vatCode": {
+								"type": "string",
+								"maxLength": 5,
+								"description": "The unique identifier of the vat account."
+							},
+							"self": {
+								"type": "string",
+								"format": "uri",
+								"description": "A unique link reference to the vatAccount item.",
+								"required": true
+							}
+						}
+					},
+					"customer": {
+						"type": "object",
+						"description": "The customer for this entity.",
+						"properties": {
+							"customerNumber": {
+								"type": "integer",
+								"description": "The unique identifier of customer.",
+								"filterable": true,
+								"sortable": true
+							},
+							"self": {
+								"type": "string",
+								"format": "uri",
+								"description": "A unique link reference to the customer.",
+								"required": true
+							}
+						}
+					},
+					"supplier": {
+						"type": "object",
+						"description": "The supplier for this entity.",
+						"properties": {
+							"supplierNumber": {
+								"type": "integer",
+								"description": "The unique identifier of supplier.",
+								"filterable": true,
+								"sortable": true
+							},
+							"self": {
+								"type": "string",
+								"format": "uri",
+								"description": "A unique link reference to the supplier.",
+								"required": true
+							}
+						}
+					},
+					"unit1": {
+						"type": "object",
+						"description": "The first unit of measure applied to the entry. Requires dimension module.",
+						"properties": {
+							"unitNumber": {
+								"type": "integer",
+								"description": "The unique identifier of the unit.",
+								"filterable": true,
+								"sortable": true,
+								"minimum": 0
+							},
+							"self": {
+								"type": "string",
+								"format": "uri",
+								"description": "A unique reference to the unit resource."
+							}
+						}
+					},
+					"unit2": {
+						"type": "object",
+						"description": "The second unit of measure applied to the entry. Requires dimension module.",
+						"properties": {
+							"unitNumber": {
+								"type": "integer",
+								"description": "The unique identifier of the unit.",
+								"filterable": true,
+								"sortable": true,
+								"minimum": 0
+							},
+							"self": {
+								"type": "string",
+								"format": "uri",
+								"description": "A unique reference to the unit resource."
+							}
+						}
+					},
+					"quantity1": {
+						"type": "number",
+						"maxDecimal": 2,
+						"filterable": true,
+						"sortable": true,
+						"description": "Requires dimension module."
+					},
+					"quantity2": {
+						"type": "number",
+						"maxDecimal": 2,
+						"filterable": true,
+						"sortable": true,
+						"description": "Requires dimension module."
+					},
+					"voucherNumber": {
+						"type": "integer",
+						"filterable": true,
+						"sortable": true,
+						"description": "The identifier of the voucher this entry belongs to."
+					},
+					"bookedInvoice": {
+						"type": "object",
+						"description": "A refernce to any booked Invoice this entry might be related to.",
+						"properties": {
+							"bookedInvoiceNumber": {
+								"type": "integer",
+								"minimum": 1,
+								"description": "A unique identifier of the booked invoice."
+							},
+							"self": {
+								"type": "string",
+								"format": "uri",
+								"description": "A unique reference to the booked invoice resource."
+							}
+						}
+					},
+					"invoiceNumber": {
+						"type": "integer",
+						"description": "Unique identifier for reminders and invoices."
+					},
+					"remainder": {
+						"type": "number",
+						"maxDecimal": 2,
+						"filterable": true,
+						"sortable": true,
+						"description": "The remainder on the entry."
+					},
+					"remainderInBaseCurrency": {
+						"type": "number",
+						"maxDecimal": 2,
+						"filterable": true,
+						"sortable": true,
+						"description": "The remainder in base currency on the entry."
+					},
+					"paymentDetails": {
+						"type": "object",
+						"description": "Payment details associated with the supplier invoice. Each payment detail contains two keys that are required. For the +71 type, fiSupplierNo and ocrLine is expected. For the +73 type, fiSupplierNo and message is expected. For the +04 type, giroAccount and ocrLine is expected. For the bank transfer type, accountNo and message is expected. For the IBAN type, ibanSwift and message is expected. For the +75 type, fiSupplierNo and ocrLineMessage is expected. Please refer to the schema for validation rules details.",
+						"properties": {
+							"paymentType": {
+								"type": "object",
+								"description": "A specific payment type on the entry.",
+								"oneOf": [
+									{
+										"properties": {
+											"fiSupplierNo": {
+												"type": "string",
+												"required": true
+											},
+											"ocrLine": {
+												"type": "string",
+												"minLength": 15,
+												"maxLength": 15,
+												"required": true
+											}
+										}
+									},
+									{
+										"properties": {
+											"fiSupplierNo": {
+												"type": "string",
+												"required": true
+											},
+											"message": {
+												"type": "string",
+												"minLength": 5,
+												"maxLength": 100,
+												"required": true
+											}
+										}
+									},
+									{
+										"properties": {
+											"giroAccount": {
+												"type": "string",
+												"required": true
+											},
+											"ocrLine": {
+												"type": "string",
+												"minLength": 16,
+												"maxLength": 16,
+												"required": true
+											}
+										}
+									},
+									{
+										"properties": {
+											"accountNo": {
+												"type": "string",
+												"required": true
+											},
+											"message": {
+												"type": "string",
+												"minLength": 5,
+												"maxLength": 100,
+												"required": true
+											}
+										}
+									},
+									{
+										"properties": {
+											"ibanSwift": {
+												"type": "string",
+												"required": true
+											},
+											"message": {
+												"type": "string",
+												"minLength": 5,
+												"maxLength": 100,
+												"required": true
+											}
+										}
+									},
+									{
+										"properties": {
+											"fiSupplierNo": {
+												"type": "string",
+												"required": true
+											},
+											"ocrLineMessage": {
+												"type": "string",
+												"minLength": 16,
+												"maxLength": 157,
+												"required": true
+											}
+										}
+									}
+								],
+								"properties": {
+									"paymentTypeNumber": {
+										"type": "integer",
+										"minimum": 1,
+										"description": "The payment type number is a positive unique numerical identifier."
+									},
+									"self": {
+										"type": "string",
+										"format": "uri",
+										"description": "A unique link reference to the payment type item.",
+										"required": true
+									}
+								}
+							}
+						}
+					},
+					"self": {
+						"type": "string",
+						"format": "uri",
+						"description": "A unique reference to the entry resource.",
+						"required": true
+					}
+				}
+			}
+		},
+		"metaData": {
+			"type": "object",
+			"description": "Information about possible actions, endpoints and resource paths related to the endpoint."
+		},
+		"pagination": {
+			"type": "object",
+			"description": "Information about the pagination."
+		},
+		"self": {
+			"type": "string",
+			"format": "uri",
+			"description": "A unique reference to the accounting year entries resource.",
+			"required": true
+		}
+	}
+}

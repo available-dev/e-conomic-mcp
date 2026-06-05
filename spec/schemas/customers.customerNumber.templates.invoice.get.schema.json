@@ -1,0 +1,234 @@
+{
+	"$schema": "http://json-schema.org/draft-03/schema#",
+	"title": "Draft invoice template Schema",
+	"description": "A schema for retrieval of a draft invoice template based on a customer.",
+	"type": "object",
+	"restdocs": "http://restdocs.e-conomic.com/#get-customers-customernumber-templates-invoice",
+	"properties": {
+		"date": {
+			"type": "string",
+			"format": "full-date",
+			"pattern": "\\d{4}-\\d{2}-\\d{2}",
+			"description": "Invoice issue date. Format according to ISO-8601 (YYYY-MM-DD)."
+		},
+		"currency": {
+			"type": "string",
+			"pattern": "[a-zA-Z]{3}",
+			"description": "The ISO 4217 currency code of the invoice. This represents the trading currency."
+		},
+		"exchangeRate": {
+			"type": "number",
+			"maxDecimal": 6,
+			"description": "The exchange rate between the invoice currency and the base currency of the agreement. The exchange rate expresses how much it will cost in base currency to buy 100 units of the invoice currency."
+		},
+		"dueDate": {
+			"type": "string",
+			"format": "full-date",
+			"pattern": "\\d{4}-\\d{2}-\\d{2}",
+			"description": "The date the invoice is due for payment. Format according to ISO-8601 (YYYY-MM-DD). This is only used if the terms of payment is of type 'duedate'."
+		},
+		"paymentTerms": {
+			"type": "object",
+			"description": "The terms of payment for the invoice.",
+			"properties": {
+				"paymentTermsNumber": {
+					"type": "integer",
+					"minimum": 0,
+					"exclusiveMinimum": true,
+					"description": "A unique identifier of the payment term."
+				},
+				"self": {
+					"type": "string",
+					"format": "uri",
+					"description": "A unique reference to the payment term resource.",
+					"required": true
+				}
+			}
+		},
+		"customer": {
+			"type": "object",
+			"description": "The customer being invoiced.",
+			"properties": {
+				"customerNumber": {
+					"type": "integer",
+					"maximum": 999999999,
+					"minimum": 1,
+					"description": "The customer number is a positive unique numerical identifier with a maximum of 9 digits."
+				},
+				"self": {
+					"type": "string",
+					"format": "uri",
+					"description": "A unique reference to the customer resource.",
+					"required": true
+				}
+			}
+		},
+		"recipient": {
+			"type": "object",
+			"description": "The actual recipient of the invoice. This may be the same info found on the customer (and will probably be so in most cases) but it may also be a different recipient. For instance, the customer placing the order may be ACME Headquarters, but the recipient of the invoice may be ACME IT.",
+			"properties": {
+				"name": {
+					"type": "string",
+					"maxLength": 250,
+					"description": "The name of the actual recipient."
+				},
+				"address": {
+					"type": "string",
+					"maxLength": 250,
+					"description": "The street address of the actual recipient."
+				},
+				"zip": {
+					"type": "string",
+					"maxLength": 50,
+					"description": "The zip code of the actual recipient."
+				},
+				"city": {
+					"type": "string",
+					"maxLength": 250,
+					"description": "The city of the actual recipient."
+				},
+				"country": {
+					"type": "string",
+					"maxLength": 50,
+					"description": "The country of the actual recipient."
+				},
+				"ean": {
+					"type": "string",
+					"maxLength": 13,
+					"description": "The 'European Article Number' of the actual recipient."
+				},
+				"publicEntryNumber": {
+					"type": "string",
+					"maxLength": 40,
+					"description": "The public entry number of the actual recipient."
+				},
+				"attention": {
+					"type": "object",
+					"description": "The person to whom this invoice is addressed.",
+					"properties": {
+						"customerContactNumber": {
+							"type": "integer",
+							"description": "Unique identifier of the customer employee."
+						},
+						"self": {
+							"type": "string",
+							"format": "uri",
+							"description": "A unique reference to the customer employee.",
+							"required": true
+						}
+					}
+				},
+				"vatZone": {
+					"type": "object",
+					"description": "Recipient vat zone.",
+					"properties": {
+						"vatZoneNumber": {
+							"type": "integer",
+							"description": "Unique identifier of the vat zone."
+						},
+						"self": {
+							"type": "string",
+							"format": "uri",
+							"description": "A unique reference to the vat zone.",
+							"required": true
+						}
+					}
+				}
+			}
+		},
+		"deliveryLocation": {
+			"type": "object",
+			"description": "A reference to the place of delivery for the goods on the invoice",
+			"properties": {
+				"deliveryLocationNumber": {
+					"type": "integer",
+					"description": "A unique identifier for the delivery location."
+				},
+				"self": {
+					"type": "string",
+					"format": "uri",
+					"description": "A unique reference to the delivery location resource.",
+					"required": true
+				}
+			}
+		},
+		"delivery": {
+			"type": "object",
+			"description": "The actual place of delivery for the goods on the invoice. This is usually the same place as the one referenced in the deliveryLocation property, but may be edited as required.",
+			"properties": {
+				"address": {
+					"type": "string",
+					"maxLength": 255,
+					"description": "Street address where the goods must be delivered to the customer."
+				},
+				"zip": {
+					"type": "string",
+					"maxLength": 30,
+					"description": "The zip code of the place of delivery."
+				},
+				"city": {
+					"type": "string",
+					"maxLength": 50,
+					"description": "The city of the place of delivery"
+				},
+				"country": {
+					"type": "string",
+					"maxLength": 50,
+					"description": "The country of the place of delivery"
+				},
+				"deliveryTerms": {
+					"type": "string",
+					"maxLength": 100,
+					"description": "Details about the terms of delivery."
+				},
+				"deliveryDate": {
+					"type": "string",
+					"format": "full-date",
+					"pattern": "\\d{4}-\\d{2}-\\d{2}",
+					"description": "The date of delivery."
+				}
+			}
+		},
+		"references": {
+			"type": "object",
+			"description": "Customer and company references related to this invoice.",
+			"properties": {
+				"customerContact": {
+					"type": "object",
+					"description": "The customer contact is a reference to the employee at the customer to contact regarding the invoice.",
+					"properties": {
+						"customerContactNumber": {
+							"type": "integer",
+							"minimum": 0,
+							"exclusiveMinimum": true,
+							"description": "Unique identifier of the customer contact."
+						},
+						"self": {
+							"type": "string",
+							"format": "uri",
+							"description": "A unique reference to the customer contact resource.",
+							"required": true
+						}
+					}
+				},
+				"salesPerson": {
+					"type": "object",
+					"description": "The sales person is a reference to the employee who sold the goods on the invoice. This is also the person who is credited with this sale in reports.",
+					"properties": {
+						"employeeNumber": {
+							"type": "integer",
+							"minimum": 1,
+							"description": "Unique identifier of the employee."
+						},
+						"self": {
+							"type": "string",
+							"format": "uri",
+							"description": "A unique reference to the employee resource.",
+							"required": true
+						}
+					}
+				}
+			}
+		}
+	}
+}

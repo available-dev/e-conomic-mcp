@@ -1,0 +1,25 @@
+{
+	"$schema": "http://json-schema.org/draft-03/schema#",
+	"title": "Journals schema for the finance voucher template",
+	"description": "A schema for retrieving template for the finance voucher.",
+	"type": "object",
+	"restdocs": "http://restdocs.e-conomic.com/#get-journals-journalnumber-templates-financevoucher",
+	"properties": {
+		"account": {
+			"type": "string",
+			"format": "uri",
+			"description": "The unique reference to the finance voucher template using account"
+		},
+		"contraAccount": {
+			"type": "string",
+			"format": "uri",
+			"description": "The unique reference to the finance voucher template using contra account"
+		},
+		"self": {
+			"type": "string",
+			"format": "uri",
+			"description": "The unique self reference of the finance voucher template collection.",
+			"required": true
+		}
+	}
+}

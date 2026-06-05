@@ -1,0 +1,74 @@
+{
+	"$schema": "http://json-schema.org/draft-03/schema#",
+	"title": "Accounting Year totals schema",
+	"description": "A schema for retrieving account totals for a specific accounting year.",
+	"type": "object",
+	"restdocs": "http://restdocs.e-conomic.com/#get-accounting-years-accountingyear-totals",
+	"properties": {
+		"collection": {
+			"type": "array",
+			"description": "A collection of the totals.",
+			"items": {
+				"title": "Entry",
+				"type": "object",
+				"description": "A specific total for an account in the accounting year.",
+				"properties": {
+					"totalInBaseCurrency": {
+						"type": "number",
+						"maxDecimal": 2,
+						"description": "The total entry amount in base currency for the accounting year."
+					},
+					"account": {
+						"type": "object",
+						"description": "The account used.",
+						"properties": {
+							"accountNumber": {
+								"type": "integer",
+								"description": "The account number."
+							},
+							"self": {
+								"type": "string",
+								"format": "uri",
+								"description": "A unique reference to the account resource.",
+								"required": true
+							}
+						}
+					},
+					"fromDate": {
+						"type": "string",
+						"format": "full-date",
+						"pattern": "\\d{4}-\\d{2}-\\d{2}",
+						"defaultsorting": "ascending",
+						"description": "The first date in the period formated according to ISO-8601 (YYYY-MM-DD)."
+					},
+					"toDate": {
+						"type": "string",
+						"format": "full-date",
+						"pattern": "\\d{4}-\\d{2}-\\d{2}",
+						"description": "The last date in the period formated according to ISO-8601 (YYYY-MM-DD)."
+					},
+					"self": {
+						"type": "string",
+						"format": "uri",
+						"description": "A unique reference to the account accounting year totals resource.",
+						"required": true
+					}
+				}
+			}
+		},
+		"metaData": {
+			"type": "object",
+			"description": "Information about possible actions, endpoints and resource paths related to the endpoint."
+		},
+		"pagination": {
+			"type": "object",
+			"description": "Information about the pagination."
+		},
+		"self": {
+			"type": "string",
+			"format": "uri",
+			"description": "A unique reference to the accounting year totals resource.",
+			"required": true
+		}
+	}
+}

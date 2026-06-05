@@ -1,0 +1,69 @@
+{
+	"$schema": "http://json-schema.org/draft-03/schema#",
+	"title": "App roles collection schema",
+	"description": "A schema for retrieving the app roles.",
+	"type": "object",
+	"restdocs": "http://restdocs.e-conomic.com/#get-app-roles",
+	"properties": {
+		"collection": {
+			"type": "array",
+			"description": "A collection of the app roles.",
+			"items": {
+				"title": "App role schema",
+				"type": "object",
+				"description": "A schema for information about an app role.",
+				"properties": {
+					"roleNumber": {
+						"type": "integer",
+						"minimum": 1,
+						"filterable": true,
+						"sortable": true,
+						"defaultSorting": "ascending",
+						"description": "A reference number for the app role."
+					},
+					"name": {
+						"type": "string",
+						"enum": ["SuperUser", "Bookkeeping", "Sales", "ProjectEmployee"],
+						"description": "API Role name."
+					},
+					"requiredModules": {
+						"title": "Required modules",
+						"type": "array",
+						"description": "An array containing the required modules.",
+						"items": {
+							"type": "object",
+							"description": "An array of the required modules needed.",
+							"properties": {
+								"moduleNumber": {
+									"type": "integer",
+									"minimum": 1,
+									"description": "A reference number for the module."
+								},
+								"self": {
+									"type": "string",
+									"format": "uri",
+									"description": "A unique reference to the module resource.",
+									"required": true
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"metaData": {
+			"type": "object",
+			"description": "Information about possible actions, endpoints and resource paths related to the endpoint."
+		},
+		"pagination": {
+			"type": "object",
+			"description": "Information about the pagination."
+		},
+		"self": {
+			"type": "string",
+			"format": "uri",
+			"description": "The unique self reference of the app role collection.",
+			"required": true
+		}
+	}
+}

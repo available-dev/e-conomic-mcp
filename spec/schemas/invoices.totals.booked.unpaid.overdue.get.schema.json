@@ -1,0 +1,61 @@
+{
+	"$schema": "http://json-schema.org/draft-03/schema#",
+	"title": "Overdue unpaid booked invoice totals GET schema",
+	"description": "A schema for retrieval of the totals of overdue unpaid booked invoices.",
+	"type": "object",
+	"restdocs": "http://restdocs.e-conomic.com/#get-invoices-totals-booked-unpaid-overdue",
+	"properties": {
+		"netAmountInBaseCurrency": {
+			"type": "number",
+			"maxDecimal": 2,
+			"description": "The total invoice amount for all booked, unpaid and overdue invoices in the base currency of the agreement before all taxes and discounts have been applied."
+		},
+		"invoiceCount": {
+			"type": "integer",
+			"description": "The number of booked, unpaid and overdue invoices."
+		},
+		"maxDate": {
+			"type": "string",
+			"format": "full-date",
+			"pattern": "\\d{4}-\\d{2}-\\d{2}",
+			"description": "The latest date of any booked, unpaid and overdue invoice."
+		},
+		"minDate": {
+			"type": "string",
+			"format": "full-date",
+			"pattern": "\\d{4}-\\d{2}-\\d{2}",
+			"description": "The earliest date of any booked, unpaid and overdue invoice."
+		},
+		"grossRemainderInBaseCurrency": {
+			"type": "number",
+			"maxDecimal": 2,
+			"description": "The gross total remaining to be paid on the booked unpaid overdue invoices"
+		},
+		"customers": {
+			"type": "string",
+			"format": "uri",
+			"description": "A reference to the invoices totals booked unpaid overdue customer resource."
+		},
+		"accountingYears": {
+			"type": "string",
+			"format": "uri",
+			"description": "A reference to the invoices totals booked unpaid overdue accounting years resource."
+		},
+		"periods": {
+			"type": "string",
+			"format": "uri",
+			"description": "A reference to the invoices totals booked unpaid overdue periods resource."
+		},
+		"employees": {
+			"type": "string",
+			"format": "uri",
+			"description": "A reference to the invoices totals booked unpaid overdue employees resource."
+		},
+		"self": {
+			"type": "string",
+			"format": "uri",
+			"description": "A reference to the invoices totals booked unpaid overdue resource.",
+			"required": true
+		}
+	}
+}

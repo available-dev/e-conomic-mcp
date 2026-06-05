@@ -1,0 +1,25 @@
+{
+	"$schema": "http://json-schema.org/draft-03/schema#",
+	"title": "Customer totals GET schema",
+	"description": "A schema for fetching a customers totals.",
+	"type": "object",
+	"restdocs": "http://restdocs.e-conomic.com/#get-customers-customernumber-totals",
+	"properties": {
+		"drafts": {
+			"type": "string",
+			"format": "uri",
+			"description": "A reference of the customer draft invoices totals resource."
+		},
+		"booked": {
+			"type": "string",
+			"format": "uri",
+			"description": "A reference of the customer booked invoices totals resource."
+		},
+		"self": {
+			"type": "string",
+			"format": "uri",
+			"description": "The unique self reference of the customer totals resource.",
+			"required": true
+		}
+	}
+}

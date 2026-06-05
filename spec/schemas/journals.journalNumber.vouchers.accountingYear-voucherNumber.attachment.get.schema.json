@@ -1,0 +1,34 @@
+{
+	"$schema": "http://json-schema.org/draft-03/schema#",
+	"title": "Journals schema - GET file meta data",
+	"description": "A schema for retrieving file meta data connected with specific voucher.",
+	"type": "object",
+	"restdocs": "http://restdocs.e-conomic.com/#get-journals-journalnumber-vouchers-accountingyear-vouchernumber-attachment",
+	"properties": {
+		"createdAt": {
+			"type": "string",
+			"format": "full-date",
+			"pattern": "\\d{4}-\\d{2}-\\d{2}",
+			"description": "Date when file has been assigned with the voucher."
+		},
+		"description": {
+			"type": "string",
+			"description": "Note on the attachment."
+		},
+		"file": {
+			"type": "string",
+			"format": "uri",
+			"description": "A unique link reference to the file attachment."
+		},
+		"pages": {
+			"type": "integer",
+			"description": "Amount of pages associated as attachment with the given voucher."
+		},
+		"self": {
+			"type": "string",
+			"format": "uri",
+			"description": "A unique link reference to the attachment meta data.",
+			"required": true
+		}
+	}
+}

@@ -1,0 +1,113 @@
+{
+	"$schema": "http://json-schema.org/draft-03/schema#",
+	"title": "Vat Accounts collection GET schema",
+	"description": "A schema for retrieval of a collection of vat accounts.",
+	"type": "object",
+	"restdocs": "http://restdocs.e-conomic.com/#get-vat-accounts",
+	"properties": {
+		"collection": {
+			"type": "array",
+			"description": "The array containing all the vat accounts.",
+			"items": {
+				"title": "vat account",
+				"type": "object",
+				"description": "A specific vat account.",
+				"properties": {
+					"account": {
+						"type": "object",
+						"description": "The account for this vat account.",
+						"properties": {
+							"accountNumber": {
+								"type": "integer",
+								"description": "A unique identifier of the account."
+							},
+							"self": {
+								"type": "string",
+								"format": "uri",
+								"description": "A unique link reference to the account item.",
+								"required": true
+							}
+						}
+					},
+					"contraAccount": {
+						"type": "object",
+						"description": "The contra account for this vat account.",
+						"properties": {
+							"accountNumber": {
+								"type": "integer",
+								"description": "A unique identifier of the contra account."
+							},
+							"self": {
+								"type": "string",
+								"format": "uri",
+								"description": "A unique link reference to the contra account item.",
+								"required": true
+							}
+						}
+					},
+					"vatType": {
+						"type": "object",
+						"description": "The vat type for this vat account.",
+						"properties": {
+							"vatTypeNumber": {
+								"type": "integer",
+								"description": "A unique identifier of the vat type.",
+								"required": true
+							},
+							"name": {
+								"type": "string",
+								"description": "Name of the vat type.",
+								"required": true
+							},
+							"self": {
+								"type": "string",
+								"format": "uri",
+								"description": "A unique link reference to the vat type item.",
+								"required": true
+							}
+						}
+					},
+					"barred": {
+						"type": "boolean",
+						"description": "If true this vat account has been barred from further use."
+					},
+					"name": {
+						"type": "string",
+						"maxLength": 40,
+						"description": "The name of the vat account."
+					},
+					"ratePercentage": {
+						"type": "number",
+						"maxDecimal": 8,
+						"description": "The tax rate for this vat account."
+					},
+					"vatCode": {
+						"type": "string",
+						"maxLength": 5,
+						"description": "The alphanumerical code for the vat account."
+					},
+					"self": {
+						"type": "string",
+						"format": "uri",
+						"description": "A unique link reference to the vat account item.",
+						"required": true
+					}
+				}
+			}
+		},
+		"metaData": {
+			"type": "object",
+			"description": "Information about possible actions, endpoints and resource paths related to the endpoint."
+		},
+		"pagination": {
+			"type": "object",
+			"description": "Information about the pagination."
+		},
+		"self": {
+			"type": "string",
+			"format": "uri",
+			"description": "The unique self reference of the vat accounts collection.",
+			"required": true
+		}
+	}
+}

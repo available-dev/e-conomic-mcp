@@ -1,0 +1,67 @@
+{
+	"$schema": "http://json-schema.org/draft-03/schema#",
+	"title": "Draft invoice totals GET schema",
+	"description": "A schema for retrieval of the totals of draft invoices for a single customer.",
+	"type": "object",
+	"restdocs": "http://restdocs.e-conomic.com/#get-invoices-totals-drafts",
+	"properties": {
+		"netAmountInBaseCurrency": {
+			"type": "number",
+			"maxDecimal": 2,
+			"description": "The total invoice amount for all draft invoices in the base currency of the agreement before all taxes and discounts have been applied."
+		},
+		"invoiceCount": {
+			"type": "integer",
+			"description": "The number of draft invoices."
+		},
+		"maxDate": {
+			"type": "string",
+			"format": "full-date",
+			"pattern": "\\d{4}-\\d{2}-\\d{2}",
+			"description": "The latest date of any draft invoice."
+		},
+		"minDate": {
+			"type": "string",
+			"format": "full-date",
+			"pattern": "\\d{4}-\\d{2}-\\d{2}",
+			"description": "The earliest date of any draft invoice."
+		},
+		"customer": {
+			"type": "object",
+			"description": "A reference to the customer.",
+			"properties": {
+				"customerNumber": {
+					"type": "integer",
+					"maximum": 999999999,
+					"minimum": 1,
+					"description": "The customer number is a positive unique numerical identifier with a maximum of 9 digits."
+				},
+				"self": {
+					"type": "string",
+					"format": "uri",
+					"description": "The unique self reference of the customer resource.",
+				}
+			}
+		},
+		"accountingYears": {
+			"type": "string",
+			"format": "uri",
+			"description": "A reference to the draft invoices totals accounting years resource."
+		},
+		"periods": {
+			"type": "string",
+			"format": "uri",
+			"description": "A reference to the draft invoices totals periods resource."
+		},
+		"employees": {
+			"type": "string",
+			"format": "uri",
+			"description": "A reference to the draft invoices totals employees resource."
+		},
+		"self": {
+			"type": "string",
+			"format": "uri",
+			"description": "A reference to the current resource."
+		}
+	}
+}

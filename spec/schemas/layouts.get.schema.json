@@ -1,0 +1,53 @@
+{
+	"$schema": "http://json-schema.org/draft-03/schema#",
+	"title": "Layouts collection GET schema",
+	"description": "A schema for retrieval of a collection of layouts.",
+	"type": "object",
+	"restdocs": "http://restdocs.e-conomic.com/#get-layouts",
+	"properties": {
+		"collection": {
+			"type": "array",
+			"description": "The array containing all the layouts.",
+			"items": {
+				"title": "Layout",
+				"type": "object",
+				"description": "A specific layout.",
+				"properties": {
+					"layoutNumber": {
+						"type": "integer",
+						"description": "A unique identifier of the layout."
+					},
+					"name": {
+						"type": "string",
+						"maxLength": 250,
+						"description": "The name of the layout."
+					},
+					"deleted": {
+						"type": "boolean",
+						"description": "A flag indicating that the layout is deleted. Layouts with this flag set will not appear in the collection of layouts, but resources such as booked invoices might still reference this layout."
+					},
+					"self": {
+						"type": "string",
+						"format": "uri",
+						"description": "A unique link reference to the layout item.",
+						"required": true
+					}
+				}
+			}
+		},
+		"metaData": {
+			"type": "object",
+			"description": "Information about possible actions, endpoints and resource paths related to the endpoint."
+		},
+		"pagination": {
+			"type": "object",
+			"description": "Information about the pagination."
+		},
+		"self": {
+			"type": "string",
+			"format": "uri",
+			"description": "The unique self reference of the layouts collection.",
+			"required": true
+		}
+	}
+}

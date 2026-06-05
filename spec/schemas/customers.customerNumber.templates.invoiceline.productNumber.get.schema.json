@@ -1,0 +1,85 @@
+{
+	"$schema": "http://json-schema.org/draft-03/schema#",
+	"title": "Draft invoice line template schema",
+	"description": "A schema for retrieving a draft invoice line template.",
+	"type": "object",
+	"restdocs": "http://restdocs.e-conomic.com/#get-customers-customernumber-templates-invoiceline-productnumber",
+	"properties": {
+		"description": {
+			"type": "string",
+			"maxLength": 2500,
+			"description": "A description of the product or service sold."
+		},
+		"unit": {
+			"type": "object",
+			"description": "The unit of measure applied to the invoice line.",
+			"properties": {
+				"unitNumber": {
+					"type": "integer",
+					"description": "The unique identifier of the unit.",
+					"minimum": 0,
+					"exclusiveMinimum": true
+				},
+				"self": {
+					"type": "string",
+					"format": "uri",
+					"description": "A unique reference to the unit resource.",
+					"required": true
+				}
+			}
+		},
+		"product": {
+			"type": "object",
+			"description": "The product or service offered on the invoice line.",
+			"properties": {
+				"productNumber": {
+					"type": "string",
+					"maxLength": 25,
+					"description": "The unique product number. This can be a stock keeping unit identifier (SKU)."
+				},
+				"self": {
+					"type": "string",
+					"format": "uri",
+					"description": "A unique reference to the product resource.",
+					"required": true
+				}
+			}
+		},
+		"quantity": {
+			"type": "number",
+			"maxDecimal": 2,
+			"description": "The number of units of goods on the invoice line. By default value is set to 1, which can be modified using parameter query string."
+		},
+		"unitNetPrice": {
+			"type": "number",
+			"maxDecimal": 2,
+			"description": "The price of 1 unit of the goods or services on the invoice line in the invoice currency."
+		},
+		"discountPercentage": {
+			"type": "number",
+			"maxDecimal": 2,
+			"description": "A line discount expressed as a percentage."
+		},
+		"unitCostPrice": {
+			"type": "number",
+			"maxDecimal": 2,
+			"description": "The cost price of 1 unit of the goods or services in the invoice currency."
+		},
+		"marginInBaseCurrency": {
+			"type": "number",
+			"maxDecimal": 2,
+			"description": "The difference between the net price and the cost price on the invoice line in base currency."
+		},
+		"marginPercentage": {
+			"type": "number",
+			"maxDecimal": 2,
+			"description": "The margin on the invoice line expressed as a percentage."
+		},
+		"self": {
+			"type": "string",
+			"format": "uri",
+			"description": "A unique reference to the draft invoice line template resource.",
+			"required": true
+		}
+	}
+}

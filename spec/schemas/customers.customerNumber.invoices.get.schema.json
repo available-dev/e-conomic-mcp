@@ -1,0 +1,25 @@
+{
+	"$schema": "http://json-schema.org/draft-03/schema#",
+	"title": "Customer invoices GET Schema",
+	"description": "A schema for retrieval of invoices for a specific customer.",
+	"type": "object",
+	"restdocs": "http://restdocs.e-conomic.com/#get-customers-customernumber-invoices",
+	"properties": {
+		"drafts": {
+			"type": "string",
+			"format": "uri",
+			"description": "The GET link to draft invoices for a specific customer."
+		},
+		"booked": {
+			"type": "string",
+			"format": "uri",
+			"description": "The GET link to booked invoices for a specific customer."
+		},
+		"self": {
+			"type": "string",
+			"format": "uri",
+			"description": "The self reference of the customer invoices resource.",
+			"required": true
+		}
+	}
+}

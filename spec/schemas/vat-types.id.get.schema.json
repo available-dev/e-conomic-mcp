@@ -1,0 +1,25 @@
+{
+	"$schema": "http://json-schema.org/draft-03/schema#",
+	"title": "vat types GET schema",
+	"description": "A schema for retrieval of a single vat type.",
+	"type": "object",
+	"restdocs": "http://restdocs.e-conomic.com/#get-vat-types-id",
+	"properties": {
+		"vatTypeNumber": {
+			"type": "integer",
+			"description": "A unique identifier of the vat type.",
+			"required": true
+		},
+		"name": {
+			"type": "string",
+			"description": "Name of the vat type.",
+			"required": true
+		},
+		"self": {
+			"type": "string",
+			"format": "uri",
+			"description": "A unique link reference to the vat type item.",
+			"required": true
+		}
+	}
+}

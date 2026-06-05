@@ -1,0 +1,72 @@
+{
+	"$schema": "http://json-schema.org/draft-03/schema#",
+	"title": "Company bank information PUT schema",
+	"description": "A schema for updating company bank information under self.",
+	"type": "object",
+	"restdocs": "http://restdocs.e-conomic.com/#put-self-company-bankinformation",
+	"properties": {
+		"bankName": {
+			"type": "string",
+			"description": "The name of the bank."
+		},
+		"bankSortCode": {
+			"type": "string",
+			"description": "The registration number of the bank account."
+		},
+		"bankAccountNumber": {
+			"type": "string",
+			"description": "The account number in the company's bank."
+		},
+		"pbsCustomerGroupNumber": {
+			"type": "string",
+			"pattern": "^(\\d+)$",
+			"description": "Number used when registering an invoice to betalingsservice. Only used in Denmark.",
+			"required": true
+		},
+		"pbsFiSupplierNumber": {
+			"type": "string",
+			"description": "Number used when registering an invoice to betalingsservice. Only used in Denmark."
+		},
+		"bankGiroNumber": {
+			"type": "string",
+			"description": "The company's bankgiro number. Only used in Sweden and Norway."
+		},
+		"swiftCode": {
+			"type": "string",
+			"maxLength": 20,
+			"description": "The company's SWIFT code."
+		},
+		"ibanNumber": {
+			"type": "string",
+			"maxLength": 50,
+			"description": "The company's IBAN number."
+		},
+		"pbsNumber": {
+			"type": "string",
+			"pattern": "^(\\s*|\\d+)$",
+			"maxLength": 8,
+			"description": "The company's PBS number."
+		},
+		"eanLocationNumber": {
+			"type": "string",
+			"pattern": "^(\\s*|\\d+)$",
+			"minLength": 13,
+			"maxLength": 13,
+			"description": "The company's EAN number."
+		},
+		"giro": {
+			"type": "string",
+			"maxLength": 20,
+			"description": "The company's Giro number. Only used in Denmark."
+		},
+		"plusGiroNumber": {
+			"type": "string",
+			"description": "The company's Giro plus number."
+		},
+		"bankgirotCustomerNumber": {
+			"type": "string",
+			"pattern": "^(\\s*|\\d+)$",
+			"description": "The company's bank Giro number. Only used in Sweden."
+		}
+	}
+}

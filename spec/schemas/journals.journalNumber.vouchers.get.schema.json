@@ -1,0 +1,1393 @@
+{
+	"$schema": "http://json-schema.org/draft-03/schema#",
+	"title": "Journal Voucher GET schema",
+	"description": "A schema for getting a Journal Voucher.",
+	"type": "object",
+	"restdocs": "http://restdocs.e-conomic.com/#get-journals-journalnumber-vouchers",
+	"properties": {
+		"collection": {
+			"type": "array",
+			"description": "The array containing all entries belonging to the voucher on given journal.",
+			"items": {
+				"title": "Voucher entry",
+				"type": "object",
+				"description": "A specific voucher with entries.",
+				"properties": {
+					"voucherNumber": {
+						"type": "number",
+						"minimum": 1,
+						"description": "Journal voucher number that must be at least 1. Together with the accountingYear it is a unique identifier for the voucher."
+					},
+					"accountingYear": {
+						"type": "object",
+						"description": "The accounting year the voucher belongs to. Together with the voucherNumber it is a unique identifier for the voucher.",
+						"properties": {
+							"year": {
+								"type": "string",
+								"description": "A unique identifier of the accounting year."
+							},
+							"self": {
+								"type": "string",
+								"format": "uri",
+								"description": "A unique reference to the accounting year resource.",
+								"required": true
+							}
+						}
+					},
+					"journal": {
+						"type": "object",
+						"description": "The journal the voucher belongs to.",
+						"properties": {
+							"journalNumber": {
+								"type": "number",
+								"description": "Journal number that must be at least 1.",
+								"minimum": 1
+							},
+							"self": {
+								"type": "string",
+								"format": "uri",
+								"description": "A unique reference to the journal resource.",
+								"required": true
+							}
+						}
+					},
+					"entries": {
+						"type": "object",
+						"description": "Entries, separated by type, for the journal.",
+						"properties": {
+							"financeVouchers": {
+								"type": "array",
+								"description": "An array containing finance vouchers.",
+								"items": {
+									"type": "object",
+									"description": "Finance Voucher entry.",
+									"properties": {
+										"text": {
+											"type": "string",
+											"maxLength": 250,
+											"description": "Entry description."
+										},
+										"journal": {
+											"type": "object",
+											"description": "The journal the voucher belongs to.",
+											"properties": {
+												"journalNumber": {
+													"type": "number",
+													"description": "Journal number that must be at least 1.",
+													"minimum": 1
+												},
+												"self": {
+													"type": "string",
+													"format": "uri",
+													"description": "A unique reference to the journal resource.",
+													"required": true
+												}
+											}
+										},
+										"amount": {
+											"type": "number",
+											"maxDecimal": 2
+										},
+										"contraAccount": {
+											"type": "object",
+											"description": "The account used for the funds.",
+											"properties": {
+												"accountNumber": {
+													"type": "integer",
+													"minimum": 1,
+													"description": "The account number."
+												},
+												"self": {
+													"type": "string",
+													"format": "uri",
+													"description": "A unique reference to the account resource.",
+													"required": true
+												}
+											}
+										},
+										"contraVatAccount": {
+											"type": "object",
+											"description": "The account for VAT.",
+											"properties": {
+												"vatCode": {
+													"type": "string",
+													"maxLength": 5,
+													"description": "The unique identifier of the contra vat account."
+												},
+												"self": {
+													"type": "string",
+													"format": "uri",
+													"description": "A unique link reference to the contraVatAccount item.",
+													"required": true
+												}
+											}
+										},
+										"costType": {
+											"type": "object",
+											"description": "The cost type for this entity.",
+											"properties": {
+												"costTypeNumber": {
+													"type": "integer",
+													"description": "The unique identifier of the cost type."
+												},
+												"self": {
+													"type": "string",
+													"format": "uri",
+													"description": "A unique link reference to the cost type.",
+													"required": false
+												}
+											}
+										},
+										"currency": {
+											"type": "object",
+											"description": "The currency for the entry.",
+											"properties": {
+												"code": {
+													"type": "string",
+													"pattern": "[a-zA-Z]{3}",
+													"description": "The ISO 4217 3-letter currency code of the entry."
+												},
+												"self": {
+													"type": "string",
+													"format": "uri",
+													"description": "A unique link reference to the currency item.",
+													"required": true
+												}
+											}
+										},
+										"date": {
+											"type": "string",
+											"format": "full-date",
+											"pattern": "\\d{4}-\\d{2}-\\d{2}",
+											"description": "Entry date. Format according to ISO-8601 (YYYY-MM-DD)."
+										},
+										"departmentalDistribution": {
+											"type": "object",
+											"description": "A departmental distribution defines which departments this entry is distributed between. This requires the departments module to be enabled.",
+											"properties": {
+												"departmentalDistributionNumber": {
+													"type": "integer",
+													"minimum": 1,
+													"description": "A unique identifier of the departmental distribution."
+												},
+												"distributionType": {
+													"type": "string",
+													"description": "Type of the distribution"
+												},
+												"self": {
+													"type": "string",
+													"format": "uri",
+													"description": "A unique reference to the departmental distribution resource."
+												}
+											}
+										},
+										"employee": {
+											"type": "object",
+											"description": "Employee that this entry is related to. Requires Project module",
+											"properties": {
+												"employeeNumber": {
+													"type": "integer",
+													"minimum": 1,
+													"description": "A unique numerical identifier with a maximum of 9 digits."
+												},
+												"self": {
+													"type": "string",
+													"format": "uri",
+													"description": "A unique link reference to the employee item.",
+													"required": true
+												}
+											}
+										},
+										"exchangeRate": {
+											"type": "number",
+											"maxDecimals": 6,
+											"description": "The exchange rate between the base currency and the invoice currency."
+										},
+										"entryType": {
+											"enum": ["financeVoucher"],
+											"description": "Type of the journal entry. This is automatically set to financeVoucher."
+										},
+										"voucher": {
+											"type": "object",
+											"description": "Voucher that the entry belongs to.",
+											"properties": {
+												"voucherNumber": {
+													"type": "number",
+													"minimum": 1,
+													"description": "Journal voucher number that must be at least 1."
+												},
+												"self": {
+													"type": "string",
+													"format": "uri",
+													"description": "A unique link reference to the voucher item.",
+													"required": true
+												}
+											}
+										},
+										"contraVatAmount": {
+											"type": "number",
+											"maxDecimal": 2,
+											"description": "The amount of VAT on the entry on the contra account."
+										},
+										"contraVatAmountInBaseCurrency": {
+											"type": "number",
+											"maxDecimal": 2,
+											"description": "The amount of VAT on the entry on the contra account in base currency."
+										},
+										"amountBaseCurrency": {
+											"type": "number",
+											"maxDecimal": 2,
+											"description": "The amount in base currency."
+										},
+										"remainder": {
+											"type": "number",
+											"maxDecimal": 2,
+											"readonly": true,
+											"description": "Remaining amount to be paid."
+										},
+										"remainderInDefaultCurrency": {
+											"type": "number",
+											"maxDecimal": 2,
+											"readonly": true,
+											"description": "Remaining amount to be paid in default currency."
+										},
+										"account": {
+											"type": "object",
+											"description": "The account used by the entry.",
+											"properties": {
+												"accountNumber": {
+													"type": "integer",
+													"minimum": 1,
+													"description": "The account number."
+												},
+												"self": {
+													"type": "string",
+													"format": "uri",
+													"description": "A unique reference to the account resource.",
+													"required": true
+												}
+											}
+										},
+										"project": {
+											"type": "object",
+											"description": "The project the entry is connected to.",
+											"properties": {
+												"projectNumber": {
+													"type": "integer",
+													"minimum": 1,
+													"description": "A unique identifier of the project."
+												},
+												"self": {
+													"type": "string",
+													"format": "uri",
+													"description": "A unique reference to the project resource.",
+													"required": true
+												}
+											}
+										},
+										"vatAccount": {
+											"type": "object",
+											"description": "The account for VAT.",
+											"properties": {
+												"vatCode": {
+													"type": "string",
+													"maxLength": 5,
+													"description": "The unique identifier of the vat account."
+												},
+												"self": {
+													"type": "string",
+													"format": "uri",
+													"description": "A unique link reference to the vatAccount item.",
+													"required": true
+												}
+											}
+										},
+										"vatAmount": {
+											"type": "number",
+											"maxDecimal": 2,
+											"description": "The amount of VAT on the entry. Used if the entry has a VAT account."
+										},
+										"vatAmountBaseCurrency": {
+											"type": "number",
+											"maxDecimal": 2,
+											"description": "The amount of VAT on the voucher in base currency."
+										},
+										"quantity1": {
+											"type": "number",
+											"maxDecimal": 2,
+											"description": "Requires dimension module."
+										},
+										"quantity2": {
+											"type": "number",
+											"maxDecimal": 2,
+											"description": "Requires dimension module."
+										},
+										"unit1": {
+											"type": "object",
+											"description": "The first unit of measure applied to the entry. Requires dimension module.",
+											"properties": {
+												"unitNumber": {
+													"type": "integer",
+													"description": "The unique identifier of the unit.",
+													"minimum": 0
+												},
+												"self": {
+													"type": "string",
+													"format": "uri",
+													"description": "A unique reference to the unit resource."
+												}
+											}
+										},
+										"unit2": {
+											"type": "object",
+											"description": "The second unit of measure applied to the entry. Requires dimension module.",
+											"properties": {
+												"unitNumber": {
+													"type": "integer",
+													"description": "The unique identifier of the unit.",
+													"minimum": 0
+												},
+												"self": {
+													"type": "string",
+													"format": "uri",
+													"description": "A unique reference to the unit resource."
+												}
+											}
+										}
+									}
+								}
+							},
+							"customerPayments": {
+								"type": "array",
+								"description": "An array containing customer payments.",
+								"items": {
+									"type": "object",
+									"description": "Customer Payment entry.",
+									"properties": {
+										"text": {
+											"type": "string",
+											"maxLength": 250,
+											"description": "Entry description."
+										},
+										"journal": {
+											"type": "object",
+											"description": "The journal the voucher belongs to.",
+											"properties": {
+												"journalNumber": {
+													"type": "number",
+													"description": "Journal number that must be at least 1.",
+													"minimum": 1
+												},
+												"self": {
+													"type": "string",
+													"format": "uri",
+													"description": "A unique reference to the journal resource.",
+													"required": true
+												}
+											}
+										},
+										"amount": {
+											"type": "number",
+											"maxDecimal": 2
+										},
+										"contraAccount": {
+											"type": "object",
+											"description": "The account used for the funds. Either 'customer' or 'contraAccount' is required.",
+											"properties": {
+												"accountNumber": {
+													"type": "integer",
+													"minimum": 1,
+													"description": "The account number."
+												},
+												"self": {
+													"type": "string",
+													"format": "uri",
+													"description": "A unique reference to the account resource.",
+													"required": true
+												}
+											}
+										},
+										"contraVatAccount": {
+											"type": "object",
+											"description": "The account for VAT.",
+											"properties": {
+												"vatCode": {
+													"type": "string",
+													"maxLength": 5,
+													"description": "The unique identifier of the contra vat account."
+												},
+												"self": {
+													"type": "string",
+													"format": "uri",
+													"description": "A unique link reference to the contraVatAccount item.",
+													"required": true
+												}
+											}
+										},
+										"currency": {
+											"type": "object",
+											"description": "The currency for the entry.",
+											"properties": {
+												"code": {
+													"type": "string",
+													"pattern": "[a-zA-Z]{3}",
+													"description": "The ISO 4217 3-letter currency code of the entry."
+												},
+												"self": {
+													"type": "string",
+													"format": "uri",
+													"description": "A unique link reference to the currency item.",
+													"required": true
+												}
+											}
+										},
+										"date": {
+											"type": "string",
+											"format": "full-date",
+											"pattern": "\\d{4}-\\d{2}-\\d{2}",
+											"description": "Entry date. Format according to ISO-8601 (YYYY-MM-DD)."
+										},
+										"departmentalDistribution": {
+											"type": "object",
+											"description": "A departmental distribution defines which departments this entry is distributed between. This requires the departments module to be enabled.",
+											"properties": {
+												"departmentalDistributionNumber": {
+													"type": "integer",
+													"minimum": 1,
+													"description": "A unique identifier of the departmental distribution."
+												},
+												"distributionType": {
+													"type": "string",
+													"description": "Type of the distribution"
+												},
+												"self": {
+													"type": "string",
+													"format": "uri",
+													"description": "A unique reference to the departmental distribution resource."
+												}
+											}
+										},
+										"employee": {
+											"type": "object",
+											"description": "Employee that this entry is related to. Requires Project module",
+											"properties": {
+												"employeeNumber": {
+													"type": "integer",
+													"minimum": 1,
+													"description": "A unique numerical identifier with a maximum of 9 digits."
+												},
+												"self": {
+													"type": "string",
+													"format": "uri",
+													"description": "A unique link reference to the employee item.",
+													"required": true
+												}
+											}
+										},
+										"exchangeRate": {
+											"type": "number",
+											"maxDecimals": 6,
+											"description": "The exchange rate between the base currency and the invoice currency."
+										},
+										"entryType": {
+											"enum": ["customerPayment"],
+											"description": "Type of the journal entry. This is automatically set to customerPayment."
+										},
+										"voucher": {
+											"type": "object",
+											"description": "Voucher that the entry belongs to.",
+											"properties": {
+												"voucherNumber": {
+													"type": "number",
+													"minimum": 1,
+													"description": "Journal voucher number that must be at least 1."
+												},
+												"self": {
+													"type": "string",
+													"format": "uri",
+													"description": "A unique link reference to the voucher item.",
+													"required": true
+												}
+											}
+										},
+										"contraVatAmount": {
+											"type": "number",
+											"maxDecimal": 2,
+											"description": "The amount of VAT on the entry on the contra account."
+										},
+										"contraVatAmountInBaseCurrency": {
+											"type": "number",
+											"maxDecimal": 2,
+											"description": "The amount of VAT on the entry on the contra account in base currency."
+										},
+										"amountBaseCurrency": {
+											"type": "number",
+											"maxDecimal": 2,
+											"description": "The amount in base currency."
+										},
+										"remainder": {
+											"type": "number",
+											"maxDecimal": 2,
+											"readonly": true,
+											"description": "Remaining amount to be paid."
+										},
+										"remainderInDefaultCurrency": {
+											"type": "number",
+											"maxDecimal": 2,
+											"readonly": true,
+											"description": "Remaining amount to be paid in default currency."
+										},
+										"customer": {
+											"type": "object",
+											"description": "The customer this entry is based on. Either 'customer' or 'contraAccount' is required.",
+											"properties": {
+												"customerNumber": {
+													"type": "integer",
+													"maximum": 999999999,
+													"minimum": 1,
+													"description": "The customer number is a positive unique numerical identifier with a maximum of 9 digits."
+												},
+												"self": {
+													"type": "string",
+													"format": "uri",
+													"description": "A unique reference to the customer resource.",
+													"required": true
+												}
+											}
+										},
+										"customerInvoice": {
+											"type": "integer",
+											"minimum": 1,
+											"description": "Customer invoice number."
+										}
+									}
+								}
+							},
+							"supplierInvoices": {
+								"type": "array",
+								"description": "An array containing finance vouchers.",
+								"items": {
+									"type": "object",
+									"description": "Supplier Invoice entry.",
+									"properties": {
+										"text": {
+											"type": "string",
+											"maxLength": 250,
+											"description": "Entry description."
+										},
+										"journal": {
+											"type": "object",
+											"description": "The journal the voucher belongs to.",
+											"properties": {
+												"journalNumber": {
+													"type": "number",
+													"description": "Journal number that must be at least 1.",
+													"minimum": 1
+												},
+												"self": {
+													"type": "string",
+													"format": "uri",
+													"description": "A unique reference to the journal resource.",
+													"required": true
+												}
+											}
+										},
+										"amount": {
+											"type": "number",
+											"maxDecimal": 2
+										},
+										"contraAccount": {
+											"type": "object",
+											"description": "The account used for the funds. Either 'supplier' or 'contraAccount' is required.",
+											"properties": {
+												"accountNumber": {
+													"type": "integer",
+													"minimum": 1,
+													"description": "The account number."
+												},
+												"self": {
+													"type": "string",
+													"format": "uri",
+													"description": "A unique reference to the account resource.",
+													"required": true
+												}
+											}
+										},
+										"contraVatAccount": {
+											"type": "object",
+											"description": "The account for VAT.",
+											"properties": {
+												"vatCode": {
+													"type": "string",
+													"maxLength": 5,
+													"description": "The unique identifier of the contra vat account."
+												},
+												"self": {
+													"type": "string",
+													"format": "uri",
+													"description": "A unique link reference to the contraVatAccount item.",
+													"required": true
+												}
+											}
+										},
+										"costType": {
+											"type": "object",
+											"description": "The cost type for this entity.",
+											"properties": {
+												"costTypeNumber": {
+													"type": "integer",
+													"description": "The unique identifier of the cost type."
+												},
+												"self": {
+													"type": "string",
+													"format": "uri",
+													"description": "A unique link reference to the cost type.",
+													"required": false
+												}
+											}
+										},
+										"currency": {
+											"type": "object",
+											"description": "The currency for the entry.",
+											"properties": {
+												"code": {
+													"type": "string",
+													"pattern": "[a-zA-Z]{3}",
+													"description": "The ISO 4217 3-letter currency code of the entry."
+												},
+												"self": {
+													"type": "string",
+													"format": "uri",
+													"description": "A unique link reference to the currency item.",
+													"required": true
+												}
+											}
+										},
+										"date": {
+											"type": "string",
+											"format": "full-date",
+											"pattern": "\\d{4}-\\d{2}-\\d{2}",
+											"description": "Entry date. Format according to ISO-8601 (YYYY-MM-DD)."
+										},
+										"departmentalDistribution": {
+											"type": "object",
+											"description": "A departmental distribution defines which departments this entry is distributed between. This requires the departments module to be enabled.",
+											"properties": {
+												"departmentalDistributionNumber": {
+													"type": "integer",
+													"minimum": 1,
+													"description": "A unique identifier of the departmental distribution."
+												},
+												"distributionType": {
+													"type": "string",
+													"description": "Type of the distribution"
+												},
+												"self": {
+													"type": "string",
+													"format": "uri",
+													"description": "A unique reference to the departmental distribution resource."
+												}
+											}
+										},
+										"employee": {
+											"type": "object",
+											"description": "Employee that this entry is related to. Requires Project module",
+											"properties": {
+												"employeeNumber": {
+													"type": "integer",
+													"minimum": 1,
+													"description": "A unique numerical identifier with a maximum of 9 digits."
+												},
+												"self": {
+													"type": "string",
+													"format": "uri",
+													"description": "A unique link reference to the employee item.",
+													"required": true
+												}
+											}
+										},
+										"exchangeRate": {
+											"type": "number",
+											"maxDecimals": 6,
+											"description": "The exchange rate between the base currency and the invoice currency."
+										},
+										"entryType": {
+											"enum": ["supplierInvoice"],
+											"description": "Type of the journal entry. This is automatically set to supplierInvoice."
+										},
+										"voucher": {
+											"type": "object",
+											"description": "Voucher that the entry belongs to.",
+											"properties": {
+												"voucherNumber": {
+													"type": "number",
+													"minimum": 1,
+													"description": "Journal voucher number that must be at least 1."
+												},
+												"self": {
+													"type": "string",
+													"format": "uri",
+													"description": "A unique link reference to the voucher item.",
+													"required": true
+												}
+											}
+										},
+										"contraVatAmount": {
+											"type": "number",
+											"maxDecimal": 2,
+											"description": "The amount of VAT on the entry on the contra account."
+										},
+										"contraVatAmountInBaseCurrency": {
+											"type": "number",
+											"maxDecimal": 2,
+											"description": "The amount of VAT on the entry on the contra account in base currency."
+										},
+										"amountBaseCurrency": {
+											"type": "number",
+											"maxDecimal": 2,
+											"description": "The amount in base currency."
+										},
+										"remainder": {
+											"type": "number",
+											"maxDecimal": 2,
+											"readonly": true,
+											"description": "Remaining amount to be paid."
+										},
+										"remainderInDefaultCurrency": {
+											"type": "number",
+											"maxDecimal": 2,
+											"readonly": true,
+											"description": "Remaining amount to be paid in default currency."
+										},
+										"supplier": {
+											"type": "object",
+											"description": "The supplier is the vendor from whom you buy your goods. Either 'supplier' or 'contraAccount' is required.",
+											"properties": {
+												"supplierNumber": {
+													"type": "integer",
+													"description": "The supplier number is a positive unique numerical identifier with a maximum of 9 digits.",
+													"maximum": 999999999,
+													"minimum": 1
+												},
+												"self": {
+													"type": "string",
+													"format": "uri",
+													"description": "A unique self reference of the supplier.",
+													"required": true
+												}
+											}
+										},
+										"supplierInvoiceNumber": {
+											"type": "string",
+											"maxLength": 30,
+											"description": "The unique identifier of the supplier invoice gotten from the supplier."
+										},
+										"paymentDetails": {
+											"type": "object",
+											"description": "Payment details associated with the supplier invoice. Each payment detail contains two keys that are required. For the +71 type, fiSupplierNo and ocrLine is expected. For the +73 type, fiSupplierNo and message is expected. For the +04 type, giroAccount and ocrLine is expected. For the bank transfer type, accountNo and message is expected. For the IBAN type, ibanSwift and message is expected. For the +75 type, fiSupplierNo and ocrLineMessage is expected. Please refer to the schema for validation rules details.",
+											"properties": {
+												"paymentType": {
+													"type": "object",
+													"description": "A specific payment type on the entry.",
+													"oneOf": [{
+														"properties": {
+															"fiSupplierNo": {
+																"type": "string",
+																"required": true
+															},
+															"ocrLine": {
+																"type": "string",
+																"minLength": 15,
+																"maxLength": 15,
+																"required": true
+															}
+														}
+													}, {
+														"properties": {
+															"fiSupplierNo": {
+																"type": "string",
+																"required": true
+															},
+															"message": {
+																"type": "string",
+																"minLength": 5,
+																"maxLength": 100,
+																"required": true
+															}
+														}
+													}, {
+														"properties": {
+															"giroAccount": {
+																"type": "string",
+																"required": true
+															},
+															"ocrLine": {
+																"type": "string",
+																"minLength": 16,
+																"maxLength": 16,
+																"required": true
+															}
+														}
+													}, {
+														"properties": {
+															"accountNo": {
+																"type": "string",
+																"required": true
+															},
+															"message": {
+																"type": "string",
+																"minLength": 5,
+																"maxLength": 100,
+																"required": true
+															}
+														}
+													}, {
+														"properties": {
+															"ibanSwift": {
+																"type": "string",
+																"required": true
+															},
+															"message": {
+																"type": "string",
+																"minLength": 5,
+																"maxLength": 100,
+																"required": true
+															}
+														}
+													}, {
+														"properties": {
+															"fiSupplierNo": {
+																"type": "string",
+																"required": true
+															},
+															"ocrLineMessage": {
+																"type": "string",
+																"minLength": 16,
+																"maxLength": 157,
+																"required": true
+															}
+														}
+													}],
+													"properties": {
+														"paymentTypeNumber": {
+															"type": "integer",
+															"minimum": 1,
+															"description": "The payment type number is a positive unique numerical identifier."
+														},
+														"self": {
+															"type": "string",
+															"format": "uri",
+															"description": "A unique link reference to the payment type item.",
+															"required": true
+														}
+													}
+												}
+											}
+										},
+										"dueDate": {
+											"type": "string",
+											"format": "full-date",
+											"pattern": "\\d{4}-\\d{2}-\\d{2}",
+											"description": "The date the entry is due for payment. Format according to ISO-8601 (YYYY-MM-DD)."
+										},
+										"project": {
+											"type": "object",
+											"description": "The project the entry is connected to.",
+											"properties": {
+												"projectNumber": {
+													"type": "integer",
+													"minimum": 1,
+													"description": "A unique identifier of the project."
+												},
+												"self": {
+													"type": "string",
+													"format": "uri",
+													"description": "A unique reference to the project resource.",
+													"required": true
+												}
+											}
+										},
+										"quantity1": {
+											"type": "number",
+											"maxDecimal": 2,
+											"description": "Requires dimension module."
+										},
+										"quantity2": {
+											"type": "number",
+											"maxDecimal": 2,
+											"description": "Requires dimension module."
+										},
+										"unit1": {
+											"type": "object",
+											"description": "The first unit of measure applied to the entry. Requires dimension module.",
+											"properties": {
+												"unitNumber": {
+													"type": "integer",
+													"description": "The unique identifier of the unit.",
+													"minimum": 0
+												},
+												"self": {
+													"type": "string",
+													"format": "uri",
+													"description": "A unique reference to the unit resource."
+												}
+											}
+										},
+										"unit2": {
+											"type": "object",
+											"description": "The second unit of measure applied to the entry. Requires dimension module.",
+											"properties": {
+												"unitNumber": {
+													"type": "integer",
+													"description": "The unique identifier of the unit.",
+													"minimum": 0
+												},
+												"self": {
+													"type": "string",
+													"format": "uri",
+													"description": "A unique reference to the unit resource."
+												}
+											}
+										}
+									}
+								}
+							},
+							"supplierPayments": {
+								"type": "array",
+								"description": "An array containing finance vouchers.",
+								"items": {
+									"type": "object",
+									"description": "Supplier Payment entry.",
+									"properties": {
+										"text": {
+											"type": "string",
+											"maxLength": 250,
+											"description": "Entry description."
+										},
+										"journal": {
+											"type": "object",
+											"description": "The journal the voucher belongs to.",
+											"properties": {
+												"journalNumber": {
+													"type": "number",
+													"description": "Journal number that must be at least 1.",
+													"minimum": 1
+												},
+												"self": {
+													"type": "string",
+													"format": "uri",
+													"description": "A unique reference to the journal resource.",
+													"required": true
+												}
+											}
+										},
+										"amount": {
+											"type": "number",
+											"maxDecimal": 2
+										},
+										"contraAccount": {
+											"type": "object",
+											"description": "The account used for the funds. Either 'supplier' or 'contraAccount' is required.",
+											"properties": {
+												"accountNumber": {
+													"type": "integer",
+													"minimum": 1,
+													"description": "The account number."
+												},
+												"self": {
+													"type": "string",
+													"format": "uri",
+													"description": "A unique reference to the account resource.",
+													"required": true
+												}
+											}
+										},
+										"contraVatAccount": {
+											"type": "object",
+											"description": "The account for VAT.",
+											"properties": {
+												"vatCode": {
+													"type": "string",
+													"maxLength": 5,
+													"description": "The unique identifier of the contra vat account."
+												},
+												"self": {
+													"type": "string",
+													"format": "uri",
+													"description": "A unique link reference to the contraVatAccount item.",
+													"required": true
+												}
+											}
+										},
+										"currency": {
+											"type": "object",
+											"description": "The currency for the entry.",
+											"properties": {
+												"code": {
+													"type": "string",
+													"pattern": "[a-zA-Z]{3}",
+													"description": "The ISO 4217 3-letter currency code of the entry."
+												},
+												"self": {
+													"type": "string",
+													"format": "uri",
+													"description": "A unique link reference to the currency item.",
+													"required": true
+												}
+											}
+										},
+										"date": {
+											"type": "string",
+											"format": "full-date",
+											"pattern": "\\d{4}-\\d{2}-\\d{2}",
+											"description": "Entry date. Format according to ISO-8601 (YYYY-MM-DD)."
+										},
+										"departmentalDistribution": {
+											"type": "object",
+											"description": "A departmental distribution defines which departments this entry is distributed between. This requires the departments module to be enabled.",
+											"properties": {
+												"departmentalDistributionNumber": {
+													"type": "integer",
+													"minimum": 1,
+													"description": "A unique identifier of the departmental distribution."
+												},
+												"distributionType": {
+													"type": "string",
+													"description": "Type of the distribution"
+												},
+												"self": {
+													"type": "string",
+													"format": "uri",
+													"description": "A unique reference to the departmental distribution resource."
+												}
+											}
+										},
+										"employee": {
+											"type": "object",
+											"description": "Employee that this entry is related to. Requires Project module",
+											"properties": {
+												"employeeNumber": {
+													"type": "integer",
+													"minimum": 1,
+													"description": "A unique numerical identifier with a maximum of 9 digits."
+												},
+												"self": {
+													"type": "string",
+													"format": "uri",
+													"description": "A unique link reference to the employee item.",
+													"required": true
+												}
+											}
+										},
+										"exchangeRate": {
+											"type": "number",
+											"maxDecimals": 6,
+											"description": "The exchange rate between the base currency and the invoice currency."
+										},
+										"entryType": {
+											"enum": ["supplierPayment"],
+											"description": "Type of the journal entry. This is automatically set to supplierPayment."
+										},
+										"voucher": {
+											"type": "object",
+											"description": "Voucher that the entry belongs to.",
+											"properties": {
+												"voucherNumber": {
+													"type": "number",
+													"minimum": 1,
+													"description": "Journal voucher number that must be at least 1."
+												},
+												"self": {
+													"type": "string",
+													"format": "uri",
+													"description": "A unique link reference to the voucher item.",
+													"required": true
+												}
+											}
+										},
+										"contraVatAmount": {
+											"type": "number",
+											"maxDecimal": 2,
+											"description": "The amount of VAT on the entry on the contra account."
+										},
+										"contraVatAmountInBaseCurrency": {
+											"type": "number",
+											"maxDecimal": 2,
+											"description": "The amount of VAT on the entry on the contra account in base currency."
+										},
+										"amountBaseCurrency": {
+											"type": "number",
+											"maxDecimal": 2,
+											"description": "The amount in base currency."
+										},
+										"remainder": {
+											"type": "number",
+											"maxDecimal": 2,
+											"readonly": true,
+											"description": "Remaining amount to be paid."
+										},
+										"remainderInDefaultCurrency": {
+											"type": "number",
+											"maxDecimal": 2,
+											"readonly": true,
+											"description": "Remaining amount to be paid in default currency."
+										},
+										"supplier": {
+											"type": "object",
+											"description": "The supplier is the vendor from whom you buy your goods. Either 'supplier' or 'contraAccount' is required.",
+											"properties": {
+												"supplierNumber": {
+													"type": "integer",
+													"description": "The supplier number is a positive unique numerical identifier with a maximum of 9 digits.",
+													"maximum": 999999999,
+													"minimum": 1
+												},
+												"self": {
+													"type": "string",
+													"format": "uri",
+													"description": "A unique self reference of the supplier.",
+													"required": true
+												}
+											}
+										},
+										"supplierInvoiceNumber": {
+											"type": "string",
+											"maxLength": 30,
+											"description": "The unique identifier of the supplier invoice gotten from the supplier."
+										}
+									}
+								}
+							},
+							"manualCustomerInvoices": {
+								"type": "array",
+								"description": "An array containing finance vouchers.",
+								"items": {
+									"type": "object",
+									"description": "Manual Customer Invoice entry.",
+									"properties": {
+										"text": {
+											"type": "string",
+											"maxLength": 250,
+											"description": "Entry description."
+										},
+										"journal": {
+											"type": "object",
+											"description": "The journal the voucher belongs to.",
+											"properties": {
+												"journalNumber": {
+													"type": "number",
+													"description": "Journal number that must be at least 1.",
+													"minimum": 1
+												},
+												"self": {
+													"type": "string",
+													"format": "uri",
+													"description": "A unique reference to the journal resource.",
+													"required": true
+												}
+											}
+										},
+										"amount": {
+											"type": "number",
+											"maxDecimal": 2
+										},
+										"contraAccount": {
+											"type": "object",
+											"description": "The account used for the funds. Either 'customer' or 'contraAccount' is required.",
+											"properties": {
+												"accountNumber": {
+													"type": "integer",
+													"minimum": 1,
+													"description": "The account number."
+												},
+												"self": {
+													"type": "string",
+													"format": "uri",
+													"description": "A unique reference to the account resource.",
+													"required": true
+												}
+											}
+										},
+										"contraVatAccount": {
+											"type": "object",
+											"description": "The account for VAT.",
+											"properties": {
+												"vatCode": {
+													"type": "string",
+													"maxLength": 5,
+													"description": "The unique identifier of the contra vat account."
+												},
+												"self": {
+													"type": "string",
+													"format": "uri",
+													"description": "A unique link reference to the contraVatAccount item.",
+													"required": true
+												}
+											}
+										},
+										"currency": {
+											"type": "object",
+											"description": "The currency for the entry.",
+											"properties": {
+												"code": {
+													"type": "string",
+													"pattern": "[a-zA-Z]{3}",
+													"description": "The ISO 4217 3-letter currency code of the entry."
+												},
+												"self": {
+													"type": "string",
+													"format": "uri",
+													"description": "A unique link reference to the currency item.",
+													"required": true
+												}
+											}
+										},
+										"date": {
+											"type": "string",
+											"format": "full-date",
+											"pattern": "\\d{4}-\\d{2}-\\d{2}",
+											"description": "Entry date. Format according to ISO-8601 (YYYY-MM-DD)."
+										},
+										"departmentalDistribution": {
+											"type": "object",
+											"description": "A departmental distribution defines which departments this entry is distributed between. This requires the departments module to be enabled.",
+											"properties": {
+												"departmentalDistributionNumber": {
+													"type": "integer",
+													"minimum": 1,
+													"description": "A unique identifier of the departmental distribution."
+												},
+												"distributionType": {
+													"type": "string",
+													"description": "Type of the distribution"
+												},
+												"self": {
+													"type": "string",
+													"format": "uri",
+													"description": "A unique reference to the departmental distribution resource."
+												}
+											}
+										},
+										"employee": {
+											"type": "object",
+											"description": "Employee that this entry is related to. Requires Project module",
+											"properties": {
+												"employeeNumber": {
+													"type": "integer",
+													"minimum": 1,
+													"description": "A unique numerical identifier with a maximum of 9 digits."
+												},
+												"self": {
+													"type": "string",
+													"format": "uri",
+													"description": "A unique link reference to the employee item.",
+													"required": true
+												}
+											}
+										},
+										"exchangeRate": {
+											"type": "number",
+											"maxDecimals": 6,
+											"description": "The exchange rate between the base currency and the invoice currency."
+										},
+										"entryType": {
+											"enum": ["manualCustomerInvoice"],
+											"description": "Type of the journal entry. This is automatically set to manualCustomerInvoice."
+										},
+										"voucher": {
+											"type": "object",
+											"description": "Voucher that the entry belongs to.",
+											"properties": {
+												"voucherNumber": {
+													"type": "number",
+													"minimum": 1,
+													"description": "Journal voucher number that must be at least 1."
+												},
+												"self": {
+													"type": "string",
+													"format": "uri",
+													"description": "A unique link reference to the voucher item.",
+													"required": true
+												}
+											}
+										},
+										"contraVatAmount": {
+											"type": "number",
+											"maxDecimal": 2,
+											"description": "The amount of VAT on the entry on the contra account."
+										},
+										"contraVatAmountInBaseCurrency": {
+											"type": "number",
+											"maxDecimal": 2,
+											"description": "The amount of VAT on the entry on the contra account in base currency."
+										},
+										"amountBaseCurrency": {
+											"type": "number",
+											"maxDecimal": 2,
+											"description": "The amount in base currency."
+										},
+										"remainder": {
+											"type": "number",
+											"maxDecimal": 2,
+											"readonly": true,
+											"description": "Remaining amount to be paid."
+										},
+										"remainderInDefaultCurrency": {
+											"type": "number",
+											"maxDecimal": 2,
+											"readonly": true,
+											"description": "Remaining amount to be paid in default currency."
+										},
+										"customer": {
+											"type": "object",
+											"description": "The customer this entry is based on. Either 'customer' or 'contraAccount' is required.",
+											"properties": {
+												"customerNumber": {
+													"type": "integer",
+													"maximum": 999999999,
+													"minimum": 1,
+													"description": "The customer number is a positive unique numerical identifier with a maximum of 9 digits."
+												},
+												"self": {
+													"type": "string",
+													"format": "uri",
+													"description": "A unique reference to the customer resource.",
+													"required": true
+												}
+											}
+										},
+										"customerInvoice": {
+											"type": "integer",
+											"minimum": 1,
+											"description": "Customer invoice number."
+										},
+										"dueDate": {
+											"type": "string",
+											"format": "full-date",
+											"pattern": "\\d{4}-\\d{2}-\\d{2}",
+											"description": "The date the entry is due for payment. Format according to ISO-8601 (YYYY-MM-DD)."
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"metaData": {
+			"type": "object",
+			"description": "Information about possible actions, endpoints and resource paths related to the endpoint."
+		},
+		"pagination": {
+			"type": "object",
+			"description": "Information about the pagination."
+		},
+		"self": {
+			"type": "string",
+			"format": "uri",
+			"description": "The unique self reference of the voucher collection.",
+			"required": true
+		}
+	}
+}

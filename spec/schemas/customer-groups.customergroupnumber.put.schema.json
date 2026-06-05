@@ -1,0 +1,49 @@
+{
+	"$schema": "http://json-schema.org/draft-03/schema#",
+	"title": "Customer group PUT Schema",
+	"description": "A schema for updating a customer group.",
+	"type": "object",
+	"restdocs": "http://restdocs.e-conomic.com/#put-customer-groups-customergroupnumber",
+	"properties": {
+		"customerGroupNumber": {
+			"type": "integer",
+			"readOnly": true,
+			"description": "The customer group number."
+		},
+		"name": {
+			"type": "string",
+			"maxLength": 50,
+			"description": "The name of the customer group."
+		},
+		"account": {
+			"type": "object",
+			"description": "The account used by the accruals.",
+			"properties": {
+				"accountNumber": {
+					"type": "integer",
+					"description": "The account number."
+				},
+				"self": {
+					"type": "string",
+					"format": "uri",
+					"description": "A unique reference to the account resource."
+				}
+			}
+		},
+		"layout": {
+			"type": "object",
+			"description": "The default layout used by the customer group.",
+			"properties": {
+				"layoutNumber": {
+					"type": "integer",
+					"description": "The layout number."
+				},
+				"self": {
+					"type": "string",
+					"format": "uri",
+					"description": "A unique reference to the layout resource."
+				}
+			}
+		}
+	}
+}

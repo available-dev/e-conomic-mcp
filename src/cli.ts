@@ -201,15 +201,32 @@ async function doctor(): Promise<void> {
       return;
     }
     const root = (await res.json()) as Record<string, unknown>;
-    const collections = Object.entries(root)
-      .filter(([k, v]) => typeof v === "string" && (v as string).startsWith("http") && k !== "metaData")
-      .map(([k]) => k);
+    const collections = collectResourceNames(root);
     process.stderr.write(`✓ Authenticated. ${collections.length} resource collections available.\n`);
     process.stderr.write(`  ${collections.slice(0, 20).join(", ")}${collections.length > 20 ? ", ..." : ""}\n`);
   } catch (err) {
     process.stderr.write(`✗ ${err instanceof Error ? err.message : String(err)}\n`);
     process.exitCode = 1;
   }
+}
+
+/**
+ * The e-conomic API root nests resource links under `resources.<category>`
+ * (e.g. `stable`, `experimental`), each a map of name -> URL.
+ */
+function collectResourceNames(root: Record<string, unknown>): string[] {
+  const names: string[] = [];
+  const resources = root.resources;
+  if (resources && typeof resources === "object") {
+    for (const category of Object.values(resources as Record<string, unknown>)) {
+      if (category && typeof category === "object") {
+        for (const [name, url] of Object.entries(category as Record<string, unknown>)) {
+          if (typeof url === "string" && url.startsWith("http")) names.push(name);
+        }
+      }
+    }
+  }
+  return names;
 }
 
 interface ParsedFlags {

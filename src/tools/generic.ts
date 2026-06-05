@@ -5,13 +5,13 @@
  * `economic_list_resources`.
  */
 
-import type { EconomicClient } from "../economicClient.js";
+import type { ClientRegistry } from "../clientRegistry.js";
 import { EconomicApiError, type HttpMethod } from "../economicClient.js";
 import type { ApiSpec } from "../openapi.js";
-import type { ToolDefinition } from "./types.js";
+import { withProfile, type ToolDefinition } from "./types.js";
 
 export function genericTools(
-  client: EconomicClient,
+  clients: ClientRegistry,
   spec: ApiSpec | undefined,
 ): ToolDefinition[] {
   const tools: ToolDefinition[] = [];
@@ -26,7 +26,7 @@ export function genericTools(
       "automatically.",
     inputSchema: {
       type: "object",
-      properties: {
+      properties: withProfile({
         method: {
           type: "string",
           enum: ["GET", "POST", "PUT", "PATCH", "DELETE"],
@@ -47,13 +47,13 @@ export function genericTools(
         body: {
           description: "Optional JSON body for POST/PUT/PATCH requests.",
         },
-      },
+      }),
       required: ["method", "path"],
       additionalProperties: false,
     },
     handler: async (args) => {
       const method = String(args.method).toUpperCase() as HttpMethod;
-      const res = await client.request({
+      const res = await clients.resolve(args.profile).request({
         method,
         path: String(args.path),
         query: args.query as Record<string, unknown> | undefined,
@@ -72,10 +72,10 @@ export function genericTools(
       "economic_request.",
     inputSchema: {
       type: "object",
-      properties: {},
+      properties: withProfile({}),
       additionalProperties: false,
     },
-    handler: async () => {
+    handler: async (args) => {
       if (spec) {
         const byTag = spec.listByTag();
         const tags = Object.fromEntries(
@@ -87,7 +87,7 @@ export function genericTools(
         return { source: "openapi-spec", operationCount: spec.operations.length, tags };
       }
       // Fall back to the self-describing root endpoint.
-      const res = await client.request({ method: "GET", path: "/" });
+      const res = await clients.resolve(args.profile).request({ method: "GET", path: "/" });
       return { source: "api-root", data: res.data };
     },
   });
@@ -100,7 +100,7 @@ export function genericTools(
       "\"-customerNumber\". Set fetchAll=true to follow all pages (bounded by maxItems).",
     inputSchema: {
       type: "object",
-      properties: {
+      properties: withProfile({
         path: {
           type: "string",
           description: "Collection path, e.g. 'customers', 'products', 'invoices/booked'.",
@@ -125,12 +125,12 @@ export function genericTools(
           type: "boolean",
           description: "Follow pagination until all pages are read (up to maxItems).",
         },
-      },
+      }),
       required: ["path"],
       additionalProperties: false,
     },
     handler: async (args) => {
-      const result = await client.collection(String(args.path), {
+      const result = await clients.resolve(args.profile).collection(String(args.path), {
         filter: args.filter as string | undefined,
         sort: args.sort as string | undefined,
         pageSize: args.pageSize as number | undefined,

@@ -84,8 +84,11 @@ npm link               # optional: expose the `e-conomic-mcp` command globally
 e-conomic-mcp [serve]            Start the MCP server over stdio (default)
 e-conomic-mcp auth login         Interactively store credentials locally
 e-conomic-mcp auth set [flags]   Store credentials non-interactively
+e-conomic-mcp auth list          List configured account profiles
+e-conomic-mcp auth use <name>    Set the default account profile
 e-conomic-mcp auth status        Show where credentials are coming from
-e-conomic-mcp auth logout        Remove locally stored credentials
+e-conomic-mcp auth remove <name> Remove a stored account profile
+e-conomic-mcp auth logout        Remove all locally stored credentials
 e-conomic-mcp doctor             Check credentials and API connectivity
 e-conomic-mcp --help | --version
 ```
@@ -112,7 +115,8 @@ You can provide them two ways (environment variables always take precedence):
    Credentials are written to `~/.config/e-conomic-mcp/credentials.json`
    (override with `$ECONOMIC_CONFIG_DIR` / `$XDG_CONFIG_HOME`) with `0600`
    permissions. Check with `e-conomic-mcp auth status`; remove with
-   `e-conomic-mcp auth logout`.
+   `e-conomic-mcp auth logout`. Multiple companies are supported as named
+   profiles — see [Multiple accounts / profiles](#multiple-accounts--profiles).
 
 2. **Environment variables** — set `ECONOMIC_APP_SECRET_TOKEN` and
    `ECONOMIC_AGREEMENT_GRANT_TOKEN` (e.g. in your MCP client config, or via
@@ -120,6 +124,46 @@ You can provide them two ways (environment variables always take precedence):
 
 > OAuth support is planned; the credential store format is forward-compatible
 > with it.
+
+## Multiple accounts / profiles
+
+The server can manage several e-conomic companies at once, stored as named
+**profiles**. A single running server can talk to any of them — no need to run
+one process per company.
+
+Store a profile per account (omit `--profile` to use the `default` profile):
+
+```bash
+e-conomic-mcp auth set --profile acme   --app-secret <token> --agreement-grant <token>
+e-conomic-mcp auth set --profile globex --app-secret <token> --agreement-grant <token>
+
+e-conomic-mcp auth list                 # show profiles; * marks the active one
+e-conomic-mcp auth use globex           # change the default profile
+e-conomic-mcp doctor --all              # check connectivity for every profile
+```
+
+Profiles live in the same `credentials.json` under a `profiles` map. Existing
+single-account files are read transparently and treated as the `default`
+profile — no migration needed.
+
+**Choosing a profile at runtime.** Every data tool takes an optional `profile`
+argument to target a specific company for that one call:
+
+```jsonc
+// economic_list_customers
+{ "profile": "globex", "filter": "name$like:Acme" }
+```
+
+Two tools manage profiles from within a conversation:
+
+- **`economic_list_profiles`** — list configured profiles and the active one
+  (no secrets are returned).
+- **`economic_use_profile`** — switch the active profile, used as the default
+  for calls that don't pass `profile`.
+
+The active profile defaults to the stored default (or `ECONOMIC_PROFILE`).
+Environment credentials (`ECONOMIC_APP_SECRET_TOKEN` etc.) configure — and take
+precedence for — the active profile.
 
 ## Usage
 
@@ -170,6 +214,7 @@ credentials and connectivity first.
 | `ECONOMIC_APP_SECRET_TOKEN` | _(required)_ | App secret token. |
 | `ECONOMIC_AGREEMENT_GRANT_TOKEN` | _(required)_ | Agreement grant token. |
 | `ECONOMIC_BASE_URL` | `https://restapi.e-conomic.com` | API base URL. |
+| `ECONOMIC_PROFILE` | `default` | Active account profile to use (see [Multiple accounts](#multiple-accounts--profiles)). |
 | `ECONOMIC_OPENAPI_SPEC` | _(bundled)_ | Override the bundled OpenAPI spec with a path/URL (e.g. a newer one). |
 | `ECONOMIC_DYNAMIC_TOOLS` | `false` | Generate one tool per operation from the spec. |
 | `ECONOMIC_DYNAMIC_TOOLS_LIMIT` | `200` | Max number of dynamic tools to generate. |
@@ -187,6 +232,10 @@ credentials and connectivity first.
   `pageSize`, `maxItems`, `fetchAll`.
 - **`economic_describe_endpoint`** — show an endpoint's parameters, request-body
   and response schema (from the bundled OpenAPI spec).
+- **`economic_list_profiles`** / **`economic_use_profile`** — list configured
+  account profiles and switch the active one (see
+  [Multiple accounts](#multiple-accounts--profiles)). Every data tool also takes
+  an optional `profile` argument.
 
 ### Typed convenience tools
 

@@ -143,8 +143,7 @@ credentials and connectivity first.
 | `ECONOMIC_APP_SECRET_TOKEN` | _(required)_ | App secret token. |
 | `ECONOMIC_AGREEMENT_GRANT_TOKEN` | _(required)_ | Agreement grant token. |
 | `ECONOMIC_BASE_URL` | `https://restapi.e-conomic.com` | API base URL. |
-| `ECONOMIC_OPENAPI_SPEC` | _(bundled)_ | Override the bundled OpenAPI spec with a path/URL. |
-| `ECONOMIC_SCHEMA_DIR` | _(unset)_ | Use a directory of e-conomic's native per-endpoint JSON schema files instead of the bundled spec. |
+| `ECONOMIC_OPENAPI_SPEC` | _(bundled)_ | Override the bundled OpenAPI spec with a path/URL (e.g. a newer one). |
 | `ECONOMIC_DYNAMIC_TOOLS` | `false` | Generate one tool per operation from the spec. |
 | `ECONOMIC_DYNAMIC_TOOLS_LIMIT` | `200` | Max number of dynamic tools to generate. |
 | `ECONOMIC_PAGE_SIZE` | `100` | Default page size for collection reads (max 1000). |
@@ -196,9 +195,8 @@ and request/response schemas), generated from e-conomic's published per-endpoint
 JSON schemas. It loads automatically and powers `economic_describe_endpoint` and
 dynamic per-endpoint tools with zero configuration.
 
-To override it, set `ECONOMIC_OPENAPI_SPEC` to your own spec path/URL, or
-`ECONOMIC_SCHEMA_DIR` to a directory of e-conomic's native `*.schema.json` files
-(served at `https://restapi.e-conomic.com/schema/`).
+To override it (e.g. point at a newer spec), set `ECONOMIC_OPENAPI_SPEC` to your
+own spec path/URL.
 
 ## Development
 

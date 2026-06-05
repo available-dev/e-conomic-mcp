@@ -18,7 +18,6 @@ import type { Config } from "./config.js";
 import { EconomicClient, EconomicApiError } from "./economicClient.js";
 import type { ApiSpec } from "./openapi.js";
 import { OpenApiSpec } from "./openapi.js";
-import { SchemaDirSpec } from "./schemaCatalog.js";
 import { genericTools } from "./tools/generic.js";
 import { typedTools } from "./tools/typed.js";
 import { dynamicTools } from "./tools/dynamic.js";
@@ -43,18 +42,6 @@ export async function buildServer(config: Config): Promise<BuiltServer> {
     } catch (err) {
       console.error(
         `[e-conomic-mcp] Warning: failed to load OpenAPI spec from ${config.openapiSpec}: ` +
-          `${err instanceof Error ? err.message : String(err)}. Continuing without it.`,
-      );
-    }
-  } else if (config.schemaDir) {
-    try {
-      spec = await SchemaDirSpec.load(config.schemaDir);
-      console.error(
-        `[e-conomic-mcp] Loaded ${spec.operations.length} operations from e-conomic schema directory ${config.schemaDir}`,
-      );
-    } catch (err) {
-      console.error(
-        `[e-conomic-mcp] Warning: failed to load schema directory ${config.schemaDir}: ` +
           `${err instanceof Error ? err.message : String(err)}. Continuing without it.`,
       );
     }

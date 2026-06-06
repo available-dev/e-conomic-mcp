@@ -22,11 +22,13 @@ import {
   maskSecret,
   saveCredentials,
 } from "./credentials.js";
+import { connect, DEFAULT_CALLBACK_PORT, callbackUrl } from "./connect.js";
 
 const HELP = `e-conomic-mcp — MCP server for the e-conomic REST API
 
 Usage:
   e-conomic-mcp [serve]            Start the MCP server over stdio (default)
+  e-conomic-mcp auth connect       Grant access in the browser (recommended)
   e-conomic-mcp auth login         Interactively store credentials locally
   e-conomic-mcp auth set [flags]   Store credentials non-interactively
   e-conomic-mcp auth status        Show where credentials are coming from
@@ -36,6 +38,13 @@ Usage:
 Options:
   -h, --help        Show this help
   -v, --version     Show version
+
+auth connect flags:
+  --app-public <token>        app public token (from the developer portal)
+  --app-secret <token>        app secret token (from the developer portal)
+  --port <number>             loopback callback port (default: ${DEFAULT_CALLBACK_PORT};
+                              must match the redirect URL registered on your app)
+  --no-open                   don't open the browser automatically
 
 auth set flags:
   --app-secret <token>        app secret token
@@ -97,6 +106,9 @@ async function serve(): Promise<void> {
 async function auth(rest: string[]): Promise<void> {
   const sub = rest[0] ?? "status";
   switch (sub) {
+    case "connect":
+      await authConnect(rest.slice(1));
+      return;
     case "login":
       await authLogin();
       return;
@@ -112,6 +124,63 @@ async function auth(rest: string[]): Promise<void> {
     default:
       process.stderr.write(`Unknown auth subcommand: ${sub}\n\n${HELP}`);
       process.exitCode = 1;
+  }
+}
+
+async function authConnect(rest: string[]): Promise<void> {
+  const flags = parseFlags(rest);
+  const stored = loadStoredCredentials();
+
+  const appPublicToken = (flags["app-public"] ?? stored?.appPublicToken ?? "").trim();
+  let appSecretToken = (flags["app-secret"] ?? stored?.appSecretToken ?? "").trim();
+  const port = flags.port ? Number.parseInt(flags.port, 10) : DEFAULT_CALLBACK_PORT;
+
+  if (!appPublicToken || Number.isNaN(port) || port <= 0) {
+    if (Number.isNaN(port) || port <= 0) {
+      process.stderr.write(`Invalid --port value: "${flags.port}"\n`);
+    } else {
+      process.stderr.write(
+        "Missing app public token. Pass --app-public <token> (find it on your app " +
+          "in the e-conomic developer portal).\n",
+      );
+    }
+    process.exitCode = 1;
+    return;
+  }
+
+  // The app secret token is needed for actual API calls; prompt if we don't
+  // already have it so the saved credentials are complete after connecting.
+  if (!appSecretToken) {
+    const rl = createInterface({ input: process.stdin, output: process.stderr });
+    try {
+      appSecretToken = (await rl.question("App secret token: ")).trim();
+    } finally {
+      rl.close();
+    }
+  }
+
+  try {
+    const { agreementGrantToken, redirectUrl } = await connect({
+      appPublicToken,
+      port,
+      openBrowser: !flags["no-open"],
+    });
+    const path = saveCredentials({
+      appPublicToken,
+      appSecretToken: appSecretToken || undefined,
+      agreementGrantToken,
+    });
+    process.stderr.write(`\n✓ Connected. Saved credentials to ${path}\n`);
+    process.stderr.write(`  Redirect URL used (register this on your app): ${redirectUrl}\n`);
+    if (!appSecretToken) {
+      process.stderr.write(
+        "  Note: no app secret token stored — set it with `e-conomic-mcp auth set " +
+          "--app-secret <token>` before the API will authenticate.\n",
+      );
+    }
+  } catch (err) {
+    process.stderr.write(`\n✗ ${err instanceof Error ? err.message : String(err)}\n`);
+    process.exitCode = 1;
   }
 }
 
@@ -173,7 +242,11 @@ function authStatus(): void {
     `Agreement grant token: ${maskSecret(envGrant || stored?.agreementGrantToken)} [${grantSrc}]\n`,
   );
   if (secretSrc === "none" || grantSrc === "none") {
-    process.stderr.write("\nNot fully configured. Run `e-conomic-mcp auth login`.\n");
+    process.stderr.write(
+      `\nNot fully configured. Run \`e-conomic-mcp auth connect\` to grant access in ` +
+        `the browser (register redirect URL ${callbackUrl()} on your app), or ` +
+        `\`e-conomic-mcp auth login\` to paste tokens manually.\n`,
+    );
   }
 }
 
@@ -231,18 +304,24 @@ function collectResourceNames(root: Record<string, unknown>): string[] {
 
 interface ParsedFlags {
   positional: string[];
+  "app-public"?: string;
   "app-secret"?: string;
   "agreement-grant"?: string;
   "base-url"?: string;
+  port?: string;
+  "no-open"?: boolean;
 }
 
 function parseFlags(args: string[]): ParsedFlags {
   const flags: ParsedFlags = { positional: [] };
   for (let i = 0; i < args.length; i++) {
     const arg = args[i]!;
-    if (arg === "--app-secret") flags["app-secret"] = args[++i];
+    if (arg === "--app-public") flags["app-public"] = args[++i];
+    else if (arg === "--app-secret") flags["app-secret"] = args[++i];
     else if (arg === "--agreement-grant") flags["agreement-grant"] = args[++i];
     else if (arg === "--base-url") flags["base-url"] = args[++i];
+    else if (arg === "--port") flags.port = args[++i];
+    else if (arg === "--no-open") flags["no-open"] = true;
     else if (!arg.startsWith("-")) flags.positional.push(arg);
   }
   return flags;

@@ -1,0 +1,19 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="e-conomic MCP">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="512" y2="512" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#1FB6A6"/>
+      <stop offset="1" stop-color="#0E7C7B"/>
+    </linearGradient>
+  </defs>
+
+  <!-- rounded square backdrop -->
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+
+  <!-- speech bubble: the "MCP / AI conversation" motif -->
+  <path d="M150 132h212a44 44 0 0 1 44 44v118a44 44 0 0 1 -44 44H252l-66 56v-56h-36a44 44 0 0 1 -44 -44V176a44 44 0 0 1 44 -44z"
+        fill="#ffffff"/>
+
+  <!-- "e" monogram for e-conomic, sitting inside the bubble -->
+  <path d="M256 175c-49 0-86 36-86 84 0 50 38 85 92 85 27 0 50-9 67-25l-30-32c-10 9-22 14-36 14-20 0-35-10-41-28h126c1-6 1-12 1-17 0-47-26-81-66-81zm-34 67c5-19 18-30 35-30 18 0 30 11 33 30h-68z"
+        fill="#0E7C7B"/>
+</svg>

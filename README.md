@@ -99,9 +99,24 @@ e-conomic authenticates every REST call with two tokens, sent as headers:
 | `X-AppSecretToken` | `ECONOMIC_APP_SECRET_TOKEN` | Identifies your integration/app. From the e-conomic developer portal. |
 | `X-AgreementGrantToken` | `ECONOMIC_AGREEMENT_GRANT_TOKEN` | Identifies the company/agreement that granted your app access. |
 
-You can provide them two ways (environment variables always take precedence):
+You can provide them three ways (environment variables always take precedence):
 
-1. **Store them locally** with the CLI (recommended for desktop use):
+1. **Grant access in the browser** (recommended) — if you have your own app
+   registered in the [e-conomic developer portal](https://secure.e-conomic.com/developer),
+   `auth connect` runs e-conomic's grant flow for you:
+
+   ```bash
+   e-conomic-mcp auth connect --app-public <public-token> --app-secret <secret-token>
+   ```
+
+   This opens e-conomic in your browser, where you approve access for one of
+   your agreements (companies). e-conomic redirects back to a temporary local
+   listener, and the resulting **agreement grant token** is captured and saved
+   automatically. The redirect URL it uses — `http://localhost:8088/callback` —
+   must be registered on your app (use `--port` to change it, and update the
+   registered redirect to match).
+
+2. **Store tokens locally** with the CLI, if you already have them:
 
    ```bash
    e-conomic-mcp auth login                     # interactive prompt
@@ -114,12 +129,9 @@ You can provide them two ways (environment variables always take precedence):
    permissions. Check with `e-conomic-mcp auth status`; remove with
    `e-conomic-mcp auth logout`.
 
-2. **Environment variables** — set `ECONOMIC_APP_SECRET_TOKEN` and
+3. **Environment variables** — set `ECONOMIC_APP_SECRET_TOKEN` and
    `ECONOMIC_AGREEMENT_GRANT_TOKEN` (e.g. in your MCP client config, or via
    `.env`).
-
-> OAuth support is planned; the credential store format is forward-compatible
-> with it.
 
 ## Usage
 

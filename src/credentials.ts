@@ -26,6 +26,8 @@ import {
 export interface StoredCredentials {
   appSecretToken?: string;
   agreementGrantToken?: string;
+  /** The app's public token, kept so `auth connect` can be re-run easily. */
+  appPublicToken?: string;
   baseUrl?: string;
   /** Reserved for future OAuth support. */
   oauth?: Record<string, unknown>;

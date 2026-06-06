@@ -96,42 +96,52 @@ e-conomic authenticates every REST call with two tokens, sent as headers:
 
 | Header | Env var | What it is |
 | --- | --- | --- |
-| `X-AppSecretToken` | `ECONOMIC_APP_SECRET_TOKEN` | Identifies your integration/app. From the e-conomic developer portal. |
-| `X-AgreementGrantToken` | `ECONOMIC_AGREEMENT_GRANT_TOKEN` | Identifies the company/agreement that granted your app access. |
+| `X-AppSecretToken` | `ECONOMIC_APP_SECRET_TOKEN` | Identifies the integration/app. From the e-conomic developer portal. |
+| `X-AgreementGrantToken` | `ECONOMIC_AGREEMENT_GRANT_TOKEN` | Identifies the company/agreement that granted the app access. |
 
-You can provide them three ways (environment variables always take precedence):
+The app secret token must be kept confidential. There are two ways to run:
 
-1. **Grant access in the browser** (recommended) — if you have your own app
-   registered in the [e-conomic developer portal](https://secure.e-conomic.com/developer),
-   `auth connect` runs e-conomic's grant flow for you:
+### 1. Use the hosted app (recommended) — just grant access
 
-   ```bash
-   e-conomic-mcp auth connect --app-public <public-token> --app-secret <secret-token>
-   ```
+If a [proxy](./proxy) is configured (`BUNDLED_PROXY_URL` in
+[`src/appCredentials.ts`](src/appCredentials.ts)), you only need to grant
+access — the app secret token is added server-side by the proxy, so you never
+handle it:
 
-   This opens e-conomic in your browser, where you approve access for one of
-   your agreements (companies). e-conomic redirects back to a temporary local
-   listener, and the resulting **agreement grant token** is captured and saved
-   automatically. The redirect URL it uses — `http://localhost:8088/callback` —
-   must be registered on your app (use `--port` to change it, and update the
-   registered redirect to match).
+```bash
+e-conomic-mcp auth connect
+```
 
-2. **Store tokens locally** with the CLI, if you already have them:
+This opens e-conomic in your browser, you approve access for one of your
+agreements (companies), and the resulting **agreement grant token** is captured
+via a temporary local listener at `http://localhost:8088/callback` and saved.
+Then just `e-conomic-mcp doctor` to verify. No app, no secret.
 
-   ```bash
-   e-conomic-mcp auth login                     # interactive prompt
-   # or non-interactively:
-   e-conomic-mcp auth set --app-secret <token> --agreement-grant <token>
-   ```
+### 2. Bring your own app — talk to e-conomic directly
 
-   Credentials are written to `~/.config/e-conomic-mcp/credentials.json`
-   (override with `$ECONOMIC_CONFIG_DIR` / `$XDG_CONFIG_HOME`) with `0600`
-   permissions. Check with `e-conomic-mcp auth status`; remove with
-   `e-conomic-mcp auth logout`.
+Prefer not to use the hosted proxy? Register your own app in the
+[e-conomic developer portal](https://secure.e-conomic.com/developer) and supply
+its **own app secret token**. As soon as a secret token is present, the client
+talks to `https://restapi.e-conomic.com` **directly** (it does not route through
+anyone's proxy). Options:
 
-3. **Environment variables** — set `ECONOMIC_APP_SECRET_TOKEN` and
-   `ECONOMIC_AGREEMENT_GRANT_TOKEN` (e.g. in your MCP client config, or via
-   `.env`).
+```bash
+# Grant flow with your own app (set the redirect URL on your app to match):
+e-conomic-mcp auth connect --app-public <your-public-token> --app-secret <your-secret-token>
+
+# …or store tokens you already have:
+e-conomic-mcp auth set --app-secret <token> --agreement-grant <token>
+
+# …or use environment variables (these always take precedence):
+ECONOMIC_APP_SECRET_TOKEN=… ECONOMIC_AGREEMENT_GRANT_TOKEN=… e-conomic-mcp
+```
+
+Stored credentials live in `~/.config/e-conomic-mcp/credentials.json` (override
+with `$ECONOMIC_CONFIG_DIR` / `$XDG_CONFIG_HOME`) with `0600` permissions. Check
+with `e-conomic-mcp auth status`; remove with `e-conomic-mcp auth logout`. To
+force a specific endpoint regardless of the above, set `ECONOMIC_BASE_URL`.
+
+> Hosting the proxy yourself? See [`proxy/README.md`](proxy/README.md).
 
 ## Usage
 

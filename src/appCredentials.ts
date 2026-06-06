@@ -1,16 +1,15 @@
 /**
- * Bundled credentials for the published "e-conomic MCP" app.
+ * Bundled configuration for the published "e-conomic MCP" app.
  *
  * These ship with the package so users can connect with only a browser grant
- * (an agreement grant token) — without registering their own e-conomic app.
+ * (an agreement grant token) — without registering their own e-conomic app and
+ * without ever handling the app secret token.
  *
- * Security trade-off (see README): the app secret token is intentionally
- * bundled here. e-conomic's API still requires a per-agreement grant token on
- * every call, so the secret token ALONE cannot read or write any agreement's
- * data. If the secret is ever compromised, rotate it in the e-conomic developer
- * portal and update the value below (this invalidates existing installs).
+ * The app secret token is NOT here. It lives only in the hosted proxy (see
+ * ../proxy), which injects it server-side. The client below just needs to know
+ * where that proxy is.
  *
- * Both values are overridable at runtime: environment variables and the local
+ * Everything is overridable at runtime: environment variables and the local
  * credential store take precedence over these defaults.
  */
 
@@ -19,7 +18,11 @@ export const BUNDLED_APP_PUBLIC_TOKEN =
   "7UGt3C45vO7xzpAshAGyP9hBEqfkAgS8RCztza3yz0Q";
 
 /**
- * App secret token — sent as X-AppSecretToken on every API call.
- * Empty until set; when empty, users must supply their own via env/connect.
+ * Base URL of the hosted proxy that injects the app secret token server-side
+ * (the deployed Cloudflare Worker from ../proxy).
+ *
+ * When set, the client talks to the proxy and needs no app secret token.
+ * When empty, the client talks directly to e-conomic and a user-supplied app
+ * secret token is required.
  */
-export const BUNDLED_APP_SECRET_TOKEN = "";
+export const BUNDLED_PROXY_URL = "";

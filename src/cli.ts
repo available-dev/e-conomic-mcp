@@ -248,13 +248,12 @@ async function doctor(): Promise<void> {
   const config = loadConfig();
   process.stderr.write(`Checking connectivity to ${config.baseUrl} ...\n`);
   try {
-    const res = await fetch(`${config.baseUrl}/`, {
-      headers: {
-        "X-AppSecretToken": config.appSecretToken,
-        "X-AgreementGrantToken": config.agreementGrantToken,
-        Accept: "application/json",
-      },
-    });
+    const headers: Record<string, string> = {
+      "X-AgreementGrantToken": config.agreementGrantToken,
+      Accept: "application/json",
+    };
+    if (config.appSecretToken) headers["X-AppSecretToken"] = config.appSecretToken;
+    const res = await fetch(`${config.baseUrl}/`, { headers });
     if (!res.ok) {
       process.stderr.write(`✗ API returned HTTP ${res.status} ${res.statusText}\n`);
       process.exitCode = 1;

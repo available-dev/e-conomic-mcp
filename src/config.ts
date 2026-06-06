@@ -8,7 +8,10 @@
  */
 
 import { loadStoredCredentials } from "./credentials.js";
-import { BUNDLED_APP_SECRET_TOKEN } from "./appCredentials.js";
+import { BUNDLED_PROXY_URL } from "./appCredentials.js";
+
+/** The production e-conomic REST API — used when no proxy is configured. */
+const DIRECT_API_BASE_URL = "https://restapi.e-conomic.com";
 
 export interface Config {
   baseUrl: string;
@@ -41,36 +44,44 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
   // Environment variables take precedence; fall back to locally stored
   // credentials (written by `e-conomic-mcp auth login` / `auth set`).
   const stored = loadStoredCredentials(env);
-  // The app secret token can be bundled with the package (so users only need to
-  // grant access); env vars and the local store still take precedence.
+
   const appSecretToken =
-    env.ECONOMIC_APP_SECRET_TOKEN?.trim() ||
-    stored?.appSecretToken?.trim() ||
-    BUNDLED_APP_SECRET_TOKEN.trim() ||
-    "";
+    env.ECONOMIC_APP_SECRET_TOKEN?.trim() || stored?.appSecretToken?.trim() || "";
   const agreementGrantToken =
     env.ECONOMIC_AGREEMENT_GRANT_TOKEN?.trim() || stored?.agreementGrantToken?.trim() || "";
 
-  if (!appSecretToken || !agreementGrantToken) {
+  // Base URL resolution:
+  //   1. An explicit override (env or store) always wins.
+  //   2. Bringing your own app secret token means you want to talk to e-conomic
+  //      directly — don't route your grant token through our proxy.
+  //   3. Otherwise use the bundled proxy (it injects the secret server-side).
+  //   4. Falling back to the direct API.
+  const baseUrl = (
+    env.ECONOMIC_BASE_URL?.trim() ||
+    stored?.baseUrl?.trim() ||
+    (appSecretToken ? DIRECT_API_BASE_URL : BUNDLED_PROXY_URL.trim()) ||
+    DIRECT_API_BASE_URL
+  ).replace(/\/+$/, "");
+  const usingProxy = baseUrl !== DIRECT_API_BASE_URL;
+
+  // The grant token is always required. The app secret token is only needed when
+  // talking directly to e-conomic (no proxy injecting it for us).
+  if (!agreementGrantToken || (!usingProxy && !appSecretToken)) {
     const missing = [
-      !appSecretToken ? "app secret token" : null,
       !agreementGrantToken ? "agreement grant token" : null,
+      !usingProxy && !appSecretToken ? "app secret token" : null,
     ].filter(Boolean);
     throw new Error(
       `Missing credentials: ${missing.join(" and ")}. Run ` +
         `\`e-conomic-mcp auth connect\` to grant access in the browser, or set ` +
-        `ECONOMIC_APP_SECRET_TOKEN / ECONOMIC_AGREEMENT_GRANT_TOKEN.`,
+        `ECONOMIC_AGREEMENT_GRANT_TOKEN (and ECONOMIC_APP_SECRET_TOKEN for direct API access).`,
     );
   }
 
   const pageSize = Math.min(parseIntEnv("ECONOMIC_PAGE_SIZE", 100), 1000);
 
   return {
-    baseUrl: (
-      env.ECONOMIC_BASE_URL?.trim() ||
-      stored?.baseUrl?.trim() ||
-      "https://restapi.e-conomic.com"
-    ).replace(/\/+$/, ""),
+    baseUrl,
     appSecretToken,
     agreementGrantToken,
     openapiSpec: env.ECONOMIC_OPENAPI_SPEC?.trim() || undefined,

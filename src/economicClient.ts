@@ -66,10 +66,13 @@ export class EconomicClient {
   async request(opts: RequestOptions): Promise<EconomicResponse> {
     const url = this.buildUrl(opts.path, opts.query);
     const headers: Record<string, string> = {
-      "X-AppSecretToken": this.config.appSecretToken,
       "X-AgreementGrantToken": this.config.agreementGrantToken,
       Accept: "application/json",
     };
+    // When a proxy injects the secret server-side, the client has none to send.
+    if (this.config.appSecretToken) {
+      headers["X-AppSecretToken"] = this.config.appSecretToken;
+    }
 
     const hasBody =
       opts.body !== undefined && opts.method !== "GET" && opts.method !== "DELETE";

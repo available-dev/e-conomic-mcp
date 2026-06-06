@@ -1,0 +1,16 @@
+{
+  "name": "e-conomic-mcp-proxy",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Cloudflare Worker that injects the e-conomic app secret token so MCP users only need an agreement grant token.",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "secret": "wrangler secret put ECONOMIC_APP_SECRET_TOKEN"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20250101.0",
+    "typescript": "^5.7.0",
+    "wrangler": "^3.99.0"
+  }
+}

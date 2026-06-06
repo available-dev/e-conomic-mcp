@@ -1,0 +1,10 @@
+name = "e-conomic-mcp-proxy"
+main = "src/worker.ts"
+compatibility_date = "2025-01-01"
+
+# The app secret token is NOT stored here. Set it as an encrypted secret:
+#   npx wrangler secret put ECONOMIC_APP_SECRET_TOKEN
+#
+# Optional: override the upstream API base (defaults to the production API).
+# [vars]
+# UPSTREAM_BASE_URL = "https://restapi.e-conomic.com"

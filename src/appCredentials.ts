@@ -25,4 +25,4 @@ export const BUNDLED_APP_PUBLIC_TOKEN =
  * When empty, the client talks directly to e-conomic and a user-supplied app
  * secret token is required.
  */
-export const BUNDLED_PROXY_URL = "";
+export const BUNDLED_PROXY_URL = "https://e-conomic-mcp-proxy.byteable-aps.workers.dev";

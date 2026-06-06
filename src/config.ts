@@ -8,6 +8,7 @@
  */
 
 import { loadStoredCredentials } from "./credentials.js";
+import { BUNDLED_APP_SECRET_TOKEN } from "./appCredentials.js";
 
 export interface Config {
   baseUrl: string;
@@ -40,7 +41,13 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
   // Environment variables take precedence; fall back to locally stored
   // credentials (written by `e-conomic-mcp auth login` / `auth set`).
   const stored = loadStoredCredentials(env);
-  const appSecretToken = env.ECONOMIC_APP_SECRET_TOKEN?.trim() || stored?.appSecretToken?.trim() || "";
+  // The app secret token can be bundled with the package (so users only need to
+  // grant access); env vars and the local store still take precedence.
+  const appSecretToken =
+    env.ECONOMIC_APP_SECRET_TOKEN?.trim() ||
+    stored?.appSecretToken?.trim() ||
+    BUNDLED_APP_SECRET_TOKEN.trim() ||
+    "";
   const agreementGrantToken =
     env.ECONOMIC_AGREEMENT_GRANT_TOKEN?.trim() || stored?.agreementGrantToken?.trim() || "";
 
@@ -50,9 +57,9 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
       !agreementGrantToken ? "agreement grant token" : null,
     ].filter(Boolean);
     throw new Error(
-      `Missing credentials: ${missing.join(" and ")}. Provide them via ` +
-        `ECONOMIC_APP_SECRET_TOKEN / ECONOMIC_AGREEMENT_GRANT_TOKEN, or run ` +
-        `\`e-conomic-mcp auth login\` to store them locally.`,
+      `Missing credentials: ${missing.join(" and ")}. Run ` +
+        `\`e-conomic-mcp auth connect\` to grant access in the browser, or set ` +
+        `ECONOMIC_APP_SECRET_TOKEN / ECONOMIC_AGREEMENT_GRANT_TOKEN.`,
     );
   }
 

@@ -1,0 +1,29 @@
+<svg width="1700" height="956" viewBox="0 0 1700 956" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1700" height="956" fill="#0b0e14"/>
+
+  <!-- terminal window -->
+  <rect x="210" y="120" width="1280" height="716" rx="20" fill="#11151d" stroke="#1e2733" stroke-width="2"/>
+  <rect x="210" y="120" width="1280" height="56" rx="20" fill="#161b24"/>
+  <rect x="210" y="156" width="1280" height="20" fill="#161b24"/>
+  <circle cx="248" cy="148" r="8" fill="#ff5f57"/>
+  <circle cx="276" cy="148" r="8" fill="#febc2e"/>
+  <circle cx="304" cy="148" r="8" fill="#28c840"/>
+  <text x="850" y="155" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="20" fill="#5b6776">zsh — e-conomic-mcp</text>
+
+  <g font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="26">
+    <text x="252" y="248" fill="#7ee0d3">$ <tspan fill="#e6edf3">e-conomic-mcp auth connect</tspan></text>
+    <text x="252" y="300" fill="#9aa5b1">Grant access in your browser…</text>
+    <text x="252" y="344" fill="#9aa5b1">Waiting for redirect to http://localhost:8088/callback …</text>
+    <text x="252" y="388" fill="#5bd6a7">✓ Connected. Saved credentials.</text>
+
+    <text x="252" y="468" fill="#7ee0d3">$ <tspan fill="#e6edf3">e-conomic-mcp doctor</tspan></text>
+    <text x="252" y="512" fill="#9aa5b1">Checking connectivity to https://restapi.e-conomic.com …</text>
+    <text x="252" y="556" fill="#5bd6a7">✓ Authenticated. 58 resource collections available.</text>
+    <text x="252" y="600" fill="#6b7785">  customers, suppliers, products, invoices, orders,</text>
+    <text x="252" y="638" fill="#6b7785">  quotes, journals, accounts, paymentTerms, …</text>
+
+    <text x="252" y="718" fill="#7ee0d3">$ <tspan fill="#e6edf3">claude mcp add e-conomic -- e-conomic-mcp</tspan></text>
+    <text x="252" y="762" fill="#5bd6a7">✓ Added MCP server "e-conomic".</text>
+    <text x="252" y="806" fill="#7ee0d3">$ <tspan fill="#e6edf3">▋</tspan></text>
+  </g>
+</svg>

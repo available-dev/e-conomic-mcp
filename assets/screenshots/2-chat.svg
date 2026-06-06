@@ -1,0 +1,38 @@
+<svg width="1700" height="956" viewBox="0 0 1700 956" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1700" height="956" fill="#f4f6f8"/>
+
+  <!-- window chrome -->
+  <rect x="250" y="90" width="1200" height="776" rx="24" fill="#ffffff" stroke="#e4e8ec" stroke-width="2"/>
+  <rect x="250" y="90" width="1200" height="64" rx="24" fill="#fbfcfd"/>
+  <rect x="250" y="130" width="1200" height="24" fill="#fbfcfd"/>
+  <circle cx="290" cy="122" r="8" fill="#ff5f57"/>
+  <circle cx="318" cy="122" r="8" fill="#febc2e"/>
+  <circle cx="346" cy="122" r="8" fill="#28c840"/>
+  <text x="850" y="128" text-anchor="middle" font-family="system-ui, sans-serif" font-size="22" font-weight="600" fill="#9aa5b1">Claude  ·  e-conomic MCP</text>
+
+  <!-- user bubble -->
+  <g transform="translate(0,210)">
+    <rect x="760" y="0" width="640" height="74" rx="20" fill="#0E7C7B"/>
+    <text x="1370" y="48" text-anchor="end" font-family="system-ui, sans-serif" font-size="27" fill="#ffffff">Vis mine 5 nyeste kunder</text>
+  </g>
+
+  <!-- assistant tool call chip -->
+  <g transform="translate(300,320)">
+    <rect x="0" y="0" width="430" height="56" rx="14" fill="#eef7f5" stroke="#cfe9e3" stroke-width="2"/>
+    <circle cx="34" cy="28" r="11" fill="#1FB6A6"/>
+    <text x="60" y="36" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="22" fill="#0E7C7B">economic_customers · list</text>
+  </g>
+
+  <!-- assistant bubble with results -->
+  <g transform="translate(300,400)">
+    <rect x="0" y="0" width="900" height="370" rx="20" fill="#f1f4f7"/>
+    <text x="40" y="58" font-family="system-ui, sans-serif" font-size="27" fill="#1f2a37">Her er dine 5 nyeste kunder:</text>
+    <g font-family="system-ui, sans-serif" font-size="25" fill="#374151">
+      <text x="40" y="118">1.  Nordlys Design ApS         · kundenr. 1042</text>
+      <text x="40" y="166">2.  Bredgade Bageri A/S        · kundenr. 1041</text>
+      <text x="40" y="214">3.  Fjord Software             · kundenr. 1039</text>
+      <text x="40" y="262">4.  Aarhus Anlæg &amp; Have ApS    · kundenr. 1037</text>
+      <text x="40" y="310">5.  Klima Montage A/S          · kundenr. 1036</text>
+    </g>
+  </g>
+</svg>

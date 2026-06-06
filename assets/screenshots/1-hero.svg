@@ -1,0 +1,35 @@
+<svg width="1700" height="956" viewBox="0 0 1700 956" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1700" y2="956" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#0E7C7B"/>
+      <stop offset="1" stop-color="#0a5250"/>
+    </linearGradient>
+    <linearGradient id="tile" x1="0" y1="0" x2="320" y2="320" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#1FB6A6"/>
+      <stop offset="1" stop-color="#0E7C7B"/>
+    </linearGradient>
+  </defs>
+  <rect width="1700" height="956" fill="url(#bg)"/>
+
+  <!-- subtle dot grid -->
+  <g fill="#ffffff" opacity="0.05">
+    <circle cx="1500" cy="120" r="4"/><circle cx="1560" cy="120" r="4"/><circle cx="1620" cy="120" r="4"/>
+    <circle cx="1500" cy="180" r="4"/><circle cx="1560" cy="180" r="4"/><circle cx="1620" cy="180" r="4"/>
+    <circle cx="1500" cy="240" r="4"/><circle cx="1560" cy="240" r="4"/><circle cx="1620" cy="240" r="4"/>
+  </g>
+
+  <!-- logo tile -->
+  <g transform="translate(150,318)">
+    <rect width="320" height="320" rx="70" fill="url(#tile)"/>
+    <path d="M94 82h132a27 27 0 0 1 27 27v74a27 27 0 0 1 -27 27h-69l-41 35v-35h-22a27 27 0 0 1 -27 -27v-74a27 27 0 0 1 27 -27z" fill="#ffffff"/>
+    <path d="M160 109c-31 0-54 23-54 53 0 31 24 53 58 53 17 0 31-6 42-16l-19-20c-6 6-14 9-23 9-13 0-22-6-26-18h79c1-4 1-7 1-11 0-29-16-50-41-50zm-21 42c3-12 11-19 22-19 11 0 19 7 21 19h-43z" fill="#0E7C7B"/>
+  </g>
+
+  <!-- text -->
+  <g transform="translate(560,330)">
+    <text x="0" y="60" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif" font-size="84" font-weight="800" fill="#ffffff">e-conomic MCP</text>
+    <text x="0" y="148" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif" font-size="40" font-weight="500" fill="#bdeee8">Dit regnskab i naturligt sprog</text>
+    <text x="0" y="232" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif" font-size="30" font-weight="400" fill="#9fd9d2">Forbind e-conomic med Claude, Cursor og</text>
+    <text x="0" y="276" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif" font-size="30" font-weight="400" fill="#9fd9d2">enhver MCP-kompatibel AI-assistent.</text>
+  </g>
+</svg>

@@ -21,8 +21,10 @@ import {
   loadStoredCredentials,
   maskSecret,
   saveCredentials,
+  type StoredCredentials,
 } from "./credentials.js";
 import { connect, DEFAULT_CALLBACK_PORT, callbackUrl } from "./connect.js";
+import { BUNDLED_APP_PUBLIC_TOKEN } from "./appCredentials.js";
 
 const HELP = `e-conomic-mcp — MCP server for the e-conomic REST API
 
@@ -39,11 +41,11 @@ Options:
   -h, --help        Show this help
   -v, --version     Show version
 
-auth connect flags:
-  --app-public <token>        app public token (from the developer portal)
-  --app-secret <token>        app secret token (from the developer portal)
+auth connect flags (all optional — defaults to the bundled app):
+  --app-public <token>        use your own app's public token instead
+  --app-secret <token>        store your own app's secret token
   --port <number>             loopback callback port (default: ${DEFAULT_CALLBACK_PORT};
-                              must match the redirect URL registered on your app)
+                              must match the redirect URL registered on the app)
   --no-open                   don't open the browser automatically
 
 auth set flags:
@@ -131,32 +133,21 @@ async function authConnect(rest: string[]): Promise<void> {
   const flags = parseFlags(rest);
   const stored = loadStoredCredentials();
 
-  const appPublicToken = (flags["app-public"] ?? stored?.appPublicToken ?? "").trim();
-  let appSecretToken = (flags["app-secret"] ?? stored?.appSecretToken ?? "").trim();
+  // Default to the bundled app's public token, so users don't need their own app.
+  const appPublicToken = (
+    flags["app-public"] ?? stored?.appPublicToken ?? BUNDLED_APP_PUBLIC_TOKEN
+  ).trim();
   const port = flags.port ? Number.parseInt(flags.port, 10) : DEFAULT_CALLBACK_PORT;
 
-  if (!appPublicToken || Number.isNaN(port) || port <= 0) {
-    if (Number.isNaN(port) || port <= 0) {
-      process.stderr.write(`Invalid --port value: "${flags.port}"\n`);
-    } else {
-      process.stderr.write(
-        "Missing app public token. Pass --app-public <token> (find it on your app " +
-          "in the e-conomic developer portal).\n",
-      );
-    }
+  if (Number.isNaN(port) || port <= 0) {
+    process.stderr.write(`Invalid --port value: "${flags.port}"\n`);
     process.exitCode = 1;
     return;
   }
-
-  // The app secret token is needed for actual API calls; prompt if we don't
-  // already have it so the saved credentials are complete after connecting.
-  if (!appSecretToken) {
-    const rl = createInterface({ input: process.stdin, output: process.stderr });
-    try {
-      appSecretToken = (await rl.question("App secret token: ")).trim();
-    } finally {
-      rl.close();
-    }
+  if (!appPublicToken) {
+    process.stderr.write("Missing app public token. Pass --app-public <token>.\n");
+    process.exitCode = 1;
+    return;
   }
 
   try {
@@ -165,19 +156,15 @@ async function authConnect(rest: string[]): Promise<void> {
       port,
       openBrowser: !flags["no-open"],
     });
-    const path = saveCredentials({
-      appPublicToken,
-      appSecretToken: appSecretToken || undefined,
-      agreementGrantToken,
-    });
+    // Only persist app tokens the user explicitly overrode; otherwise rely on
+    // the bundled defaults so the store holds just the per-agreement grant.
+    const update: StoredCredentials = { agreementGrantToken };
+    if (flags["app-public"]) update.appPublicToken = appPublicToken;
+    if (flags["app-secret"]) update.appSecretToken = flags["app-secret"];
+    const path = saveCredentials(update);
     process.stderr.write(`\n✓ Connected. Saved credentials to ${path}\n`);
-    process.stderr.write(`  Redirect URL used (register this on your app): ${redirectUrl}\n`);
-    if (!appSecretToken) {
-      process.stderr.write(
-        "  Note: no app secret token stored — set it with `e-conomic-mcp auth set " +
-          "--app-secret <token>` before the API will authenticate.\n",
-      );
-    }
+    process.stderr.write(`  Redirect URL used: ${redirectUrl}\n`);
+    process.stderr.write("  Verify with `e-conomic-mcp doctor`.\n");
   } catch (err) {
     process.stderr.write(`\n✗ ${err instanceof Error ? err.message : String(err)}\n`);
     process.exitCode = 1;

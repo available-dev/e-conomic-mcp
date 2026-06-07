@@ -151,9 +151,11 @@ connections      (id, user_id, storage_kind, status,
 threads          (id, user_id, title, created_at)
 messages         (id, thread_id, role, content, tool_calls_json, created_at)
 usage_events     (id, user_id, thread_id, model, input_tokens,
-                  output_tokens, cost_cents, created_at)
-subscriptions    (id, user_id, plan, status, stripe_customer_id,
-                  included_credits, renews_at)
+                  output_tokens, real_cost_cents, credits_charged, created_at)
+wallets          (id, user_id, balance_credits, auto_reload_threshold,
+                  auto_reload_amount, stripe_customer_id, updated_at)
+credit_topups    (id, user_id, credits, amount_paid_cents, currency,
+                  stripe_payment_id, created_at)
 files            (id, user_id, kind[receipt|generated|report],
                   source[gmail|chat_upload|generated], storage_url, mime,
                   sha256, extracted_json, linked_voucher, message_id, created_at)
@@ -301,17 +303,32 @@ agent calls via tools, alongside the storage connectors:
 
 Agent token usage is the dominant variable cost. Design for it from day one.
 
-### Pricing model — recommended: **subscription + metered overage**
-- **Free trial / Starter:** small monthly credit allotment (e.g. N agent runs)
-  to prove value.
-- **Pro (flat monthly):** includes a generous credit bucket covering typical
-  monthly receipt-matching for one company.
-- **Overage / usage-based:** beyond included credits, bill metered "agent
-  credits" (we mark up model cost; never expose raw tokens to users).
-- Billing via **Stripe** (subscriptions + usage records).
+### Pricing model — **prepaid credits, ~2–3× markup, markup hidden**
+Decided: **usage-only, prepaid credit wallet.** No subscription tiers.
 
-> Rule of thumb: never let a single user's model spend exceed their plan price.
-> The `usage_events` table makes margin observable per user/per workflow.
+- The user **tops up a credit balance** (e.g. 200 kr) and the agent **burns
+  credits as it works**. When the balance runs low, they top up again.
+- Pricing math (internal, never shown): meter the **real model spend** per
+  agent turn (via AI Gateway), multiply by a **2–3× markup**, deduct from the
+  wallet. Users see *credits*, never tokens or the multiplier.
+- **No free model spend** baked into the price — optionally a small signup
+  credit grant to let people try it.
+- **Stripe shrinks to one job: top-ups** (one-time payments / saved card for
+  auto-reload). No subscriptions, no metered Stripe usage records, no invoicing
+  logic. Much simpler than the earlier subscription design.
+
+> Why this fits: margin is structural (2–3× on every call) rather than something
+> we have to defend against a flat monthly price. A heavy user just burns credits
+> faster — they can never cost us more than they paid. The earlier "never let
+> spend exceed the plan price" risk disappears entirely.
+
+**Wallet mechanics**
+- `wallet.balance_credits` per user; each `usage_event` records real cost +
+  marked-up credits deducted, so margin and burn are observable per workflow.
+- **Auto-reload** (optional): top up X when balance < Y, so the agent never
+  stalls mid-task.
+- **Low-balance UX:** warn in chat before a long job if credits look
+  insufficient; offer one-tap top-up.
 
 ### Cost-control levers (engineering)
 1. **Model routing** — Sonnet/Haiku for extraction/matching/classification; Opus
@@ -325,32 +342,64 @@ Agent token usage is the dominant variable cost. Design for it from day one.
 4. **Batch + background** — run the heavy "scan all of April" matching as a
    background job with a cheaper model, surface results in chat; reserve live Opus
    turns for conversation.
-5. **Hard budget guardrails** — per-user/per-thread spend ceiling enforced in the
-   agent host; when hit, pause and ask the user to continue (and bill overage).
+5. **Credit guardrails** — the wallet balance *is* the ceiling: the agent host
+   checks remaining credits before/within a run; when low, it pauses and prompts
+   a top-up rather than running the balance negative.
 6. **Pre-filter before the model** — use deterministic code (amount/date
    matching) to shortlist candidates, and only ask the model to disambiguate the
    ambiguous few.
 
 ### Unit-economics target
 Track **cost-per-completed-workflow** (e.g. "cost to reconcile one month of
-receipts"). That's the number that must sit comfortably under the slice of
-subscription revenue it consumes. Instrument it from the first workflow.
+receipts"). With the 2–3× markup this is automatically profitable per call, but
+instrument it anyway — it's how we set the markup, size signup credits, and spot
+workflows whose real cost drifts (e.g. a model change) before margin erodes.
 
 ---
 
-## 12. Hosting: Vercel vs Cloudflare
+## 12. Hosting: single-service, Vercel-first
 
-| | Vercel | Cloudflare (Workers/Pages) |
+Goal (decided): **use as close to one service as possible.** Verdict: very
+achievable. Vercel-native primitives cover almost everything; there's exactly
+**one real gap (a database)** and **one if-you-charge gap (payments)**.
+
+### What Vercel covers natively
+
+| Need | Vercel-native | Status |
 |---|---|---|
-| Next.js fit | First-class | Good, more constraints |
-| Long agent calls | Functions/streaming OK; watch max duration | Workers CPU/time limits trickier for long loops |
-| Node/Agent SDK | Native Node | Workers runtime caveats |
-| Cost at scale | Higher | Lower |
-| Recommendation | **Start here** | Revisit if egress/compute cost dominates |
+| Hosting / SSR / API | Functions + **Fluid Compute** | ✅ |
+| **Long agent calls** | Fluid Compute: **300s default, up to 800s** (Pro); **Vercel Workflows** for *unlimited* pause/resume (minutes→months) | ✅ |
+| Background jobs (scan a month) | **Cron Jobs** + **Workflows** + `waitUntil` | ✅ |
+| Agent/chat runtime | **Vercel AI SDK 6** (open-source) | ✅ |
+| LLM calls + spend control | **AI Gateway** → Anthropic (streaming, tool calls, traces, failover, centralized spend) | ✅ |
+| Receipt/PDF storage | **Vercel Blob** | ✅ |
+| Flags / fast config | **Edge Config** | ✅ |
+| Google sign-in | **Auth.js** — open-source lib *in* the app, sessions in our DB (no external vendor/account) | ✅ no 3rd party |
+| **Database** | ❌ Vercel Postgres/KV **sunset**; only via **Marketplace** (Neon Postgres) | ⚠️ gap |
+| Payments (top-ups) | ❌ no Vercel-native payments → **Stripe** | ⚠️ only when charging |
 
-Long-running agent loops are the risk on either platform — mitigate by moving
-heavy work to a **queue/background worker** (Inngest/QStash) rather than holding
-an HTTP request open.
+### The long-running-agent risk is basically gone
+Earlier drafts flagged long agent loops as a hosting risk. **Fluid Compute**
+(300s default / 800s max) covers most interactive turns, and **Vercel Workflows**
+gives durable, unlimited-duration execution with pause/resume for the heavy
+"scan all of April" batch — no external queue (Inngest/QStash) needed.
+
+### "One service", honestly
+- **Strict first-party-only** hits a wall at the **database** (don't abuse
+  Blob/Edge Config for relational data).
+- **One account / one bill / one dashboard** is fully achievable: **Vercel +
+  Vercel Marketplace**, which provisions **Neon Postgres** with automatic
+  provisioning and **unified billing** — no separate account or invoice. From
+  the operator's seat it's still one service.
+- **Stripe is the only unavoidable second relationship**, and only for credit
+  top-ups (Phase 3) — the MVP doesn't touch it.
+- Bonus: **AI Gateway** doubles as the cost-control layer (metered spend +
+  observability + failover), so "use Vercel" and "control token cost" align.
+
+### Cloudflare?
+Cheaper egress/compute at scale, but Workers runtime constraints and a more
+fragmented storage story make it a worse fit for "one service + Node agent."
+Revisit only if compute/egress cost ever dominates.
 
 ---
 
@@ -367,7 +416,7 @@ an HTTP request open.
 - Next.js + Google sign-in + Postgres.
 - Connect **one** storage (e-conomic) with per-user grant token.
 - Chat that can *read* e-conomic ("list my April expenses missing receipts").
-- Basic usage metering visible to us.
+- Meter real model spend per turn (via AI Gateway) → record `usage_events`.
 
 **Phase 2 — Flagship workflow**
 - Add Gmail connection (read-only).
@@ -375,8 +424,10 @@ an HTTP request open.
 - Document service: read/verify receipts, in-chat upload, generate *bilag* PDFs.
 - Confirmation guardrails on writes.
 
-**Phase 3 — Monetize**
-- Stripe subscription + metered overage; usage dashboard; budget guardrails.
+**Phase 3 — Monetize (prepaid credits)**
+- Credit wallet + 2–3× markup on metered spend (hidden); Stripe **top-ups** only
+  (one-time + optional auto-reload); low-balance UX; credit guardrails in the
+  agent host. No subscriptions.
 
 **Phase 4 — Expand storages**
 - Drive/Dropbox, Stripe, bank feeds, more accounting actions.
@@ -388,11 +439,16 @@ an HTTP request open.
 1. **e-conomic app registration** — upload is already implemented in the
    connector; we just need our registered app's `AppSecretToken` and the per-user
    grant-token flow wired into the platform.
-2. **Auth provider** — Auth.js (more control, free) vs Clerk (faster, paid)?
-3. **DB/host** — Supabase (auth+db+storage bundled) vs Neon + Auth.js?
-4. **Language/market** — Danish-first UI & agent? (Assuming yes given e-conomic.)
-5. **Pricing anchor** — what monthly price feels right for the target SMB so we
-   can size the included credit bucket against it?
+2. ✅ **Hosting** — decided: **Vercel-first / single-service** (Vercel native +
+   Neon Postgres via Marketplace for unified billing; Auth.js for login).
+3. ✅ **Pricing** — decided: **prepaid credits, ~2–3× markup (hidden), top-up via
+   Stripe.** No subscriptions. Open sub-question: starting credit grant size +
+   the exact markup (2× vs 3×).
+4. **Agent runtime** — **Vercel AI SDK 6** (tightest Next.js + one-line
+   human-in-the-loop for our confirm-before-write step) vs **Claude Agent SDK**
+   (best MCP/caching/compaction). Both route through AI Gateway. Lean AI SDK 6
+   for the web app unless MCP ergonomics push us the other way.
+5. **Language/market** — Danish-first UI & agent? (Assuming yes given e-conomic.)
 6. **Compliance appetite** — how much GDPR/DPA groundwork up front vs. after PMF?
 
 ---
@@ -401,14 +457,17 @@ an HTTP request open.
 
 - You've **already built the hardest connector** (e-conomic MCP). The platform is
   a per-user MCP **host** + chat UI + auth + billing around it.
-- Recommended: **monorepo**, **Next.js on Vercel**, **Claude Agent SDK**,
-  **Postgres**, Google sign-in, encrypted per-user tokens.
+- **Single-service, Vercel-first:** Functions/Fluid Compute, Workflows, Cron,
+  Blob, Edge Config, AI SDK 6 + AI Gateway — plus **Neon Postgres via the Vercel
+  Marketplace** (unified billing) and **Auth.js** for Google login. Only real
+  gap: a DB (covered by Marketplace) and Stripe for top-ups.
 - **Attach receipts: already built.** The connector ships multipart upload tools
   (`economic_upload_file` + typed voucher-attachment tools, PDF/JPG/PNG, draft &
   booked). No connector work needed for the flagship action.
 - **Documents are first-class:** Claude vision reads/verifies receipts (PDF +
   image) before anything is booked; the platform also generates PDFs (reports and
   *bilag* it creates itself); users can upload files straight into the chat.
-- **Cost is a first-class design constraint:** subscription + metered overage,
-  model routing, pre-filtering, background batching, and hard budget guardrails
-  keep per-workflow cost under the revenue it consumes.
+- **Billing = prepaid credits:** users top up a wallet; we meter real spend ×
+  **2–3× markup** (hidden) and deduct credits. Margin is structural, so a heavy
+  user can never cost more than they paid. Model routing, pre-filtering,
+  background batching and AI Gateway keep the underlying cost low.

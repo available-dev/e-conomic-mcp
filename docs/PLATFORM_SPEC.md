@@ -419,6 +419,26 @@ Cheaper egress/compute at scale, but Workers runtime constraints and a more
 fragmented storage story make it a worse fit for "one service + Node agent."
 Revisit only if compute/egress cost ever dominates.
 
+### Domain & DNS — `konteo.ai` (registered at Cloudflare)
+**Registrar ≠ host.** Cloudflare is the **registrar + DNS** for `konteo.ai`; the
+app still runs on **Vercel**. We just point DNS at Vercel. No change to the
+Vercel-first decision.
+
+Subdomain plan:
+| Host | Serves | Where |
+|---|---|---|
+| `konteo.ai` (+ `www`) | Marketing landing page | Vercel (static `apps/marketing`) |
+| `app.konteo.ai` | The product (auth, chat, agent) | Vercel (`apps/web`) |
+| `api.konteo.ai` *(optional)* | Public API / webhooks later | Vercel functions |
+
+Wiring notes:
+- Add each domain in the Vercel project, then create the DNS records Vercel
+  shows at Cloudflare (apex → A/ALIAS, subdomains → CNAME).
+- Set Cloudflare records to **DNS-only (grey cloud)** for the Vercel hosts, or if
+  proxied (orange cloud), use SSL/TLS mode **Full (strict)** to avoid redirect
+  loops / double-CDN issues. Simplest: DNS-only and let Vercel handle TLS/CDN.
+- Google OAuth callback + Stripe webhooks point at `app.konteo.ai`.
+
 ---
 
 ## 13. Phased roadmap

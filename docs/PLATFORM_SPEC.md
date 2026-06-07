@@ -175,13 +175,37 @@ files            (id, user_id, kind[receipt|generated|report],
                   sha256, extracted_json, linked_voucher, message_id, created_at)
 ```
 
-`storage_kind` ∈ {`economic`, `gmail`, `drive`, …}. `credentials_encrypted` holds
-the storage-specific token blob (e-conomic agreement grant token, Google OAuth
-refresh token, …), encrypted at rest.
+`storage_kind` ∈ {`economic`, `gmail`, `microsoft`, `drive`, …}.
+`credentials_encrypted` holds the storage-specific token blob (e-conomic
+agreement grant token, Google/Microsoft OAuth refresh token, …), encrypted at
+rest. Login uses magic link, so also: `verification_tokens` (Auth.js) and
+`sessions` — separate from the data-source `connections` above.
 
 ---
 
 ## 7. Auth & per-user credentials (the crux of multi-tenancy)
+
+**Two separate concepts — keep them apart:**
+
+1. **Login (who you are)** → **magic link** (passwordless email). No password, no
+   Google/Microsoft account required to sign up.
+2. **Connections (what the agent can touch)** → each data source (e-conomic,
+   Gmail, Microsoft, …) is connected *separately*, after login, via its own OAuth.
+
+> Why decouple: login isn't tied to any provider, so a user can connect **Gmail
+> or Microsoft (or neither)** as their inbox storage. Adding Microsoft later is
+> "another inbox connector," not an auth migration. It also keeps the signup
+> friction tiny — just an email.
+
+### Login — magic link
+- **Auth.js Email provider:** user enters email → we send a one-time sign-in link
+  → clicking it creates/restores the session. Tokens/sessions in our Postgres
+  (Auth.js adapter); needs a `verification_tokens` table.
+- **Email delivery** needs a transactional email sender (e.g. **Resend** /
+  Postmark / SES) — see §12; this is one of the few things Vercel doesn't provide
+  natively.
+- Optional later: add Google/Microsoft as *login* options too — but magic link is
+  the primary, provider-agnostic path.
 
 The existing MCP server reads **one** set of tokens from env/local file. For a
 multi-tenant SaaS, every user attaches **their own** accounts. Per storage:
@@ -197,10 +221,13 @@ multi-tenant SaaS, every user attaches **their own** accounts. Per storage:
   injected credentials per-request rather than reading a global file. **Small
   refactor, already anticipated.**
 
-### Gmail / Google
-- Standard Google OAuth 2.0 with incremental scopes (`gmail.readonly` to start —
-  read-only is enough to *find* receipts; we don't need send/modify for v1).
-- Store refresh token encrypted; mint access tokens on demand.
+### Inbox — Gmail (now) and Microsoft (later)
+- **Gmail / Google:** OAuth 2.0, scope `gmail.readonly` to start — read-only is
+  enough to *find* receipts; no send/modify for v1.
+- **Microsoft / Outlook (planned):** Microsoft Graph OAuth, scope `Mail.Read`.
+  Same connector shape — the agent sees a generic "inbox" capability regardless
+  of provider, so the receipt workflow is identical.
+- Store refresh tokens encrypted; mint access tokens on demand.
 
 ### Security posture (non-negotiable for financial data)
 - Tokens encrypted at rest (AES-GCM, key in a managed KMS / Vercel+Supabase
@@ -410,7 +437,8 @@ achievable. Vercel-native primitives cover almost everything; there's exactly
 | LLM calls + spend control | **AI Gateway** → Anthropic (streaming, tool calls, traces, failover, centralized spend) | ✅ |
 | Receipt/PDF storage | **Vercel Blob** | ✅ |
 | Flags / fast config | **Edge Config** | ✅ |
-| Google sign-in | **Auth.js** — open-source lib *in* the app, sessions in our DB (no external vendor/account) | ✅ no 3rd party |
+| Login (magic link) | **Auth.js** Email provider — open-source lib *in* the app, sessions in our DB | ✅ no 3rd-party auth vendor |
+| Sending the magic-link email | ❌ no Vercel-native email → **Resend** (or Postmark/SES) | ⚠️ small gap |
 | **Database** | ❌ Vercel Postgres/KV **sunset**; only via **Marketplace** (Neon Postgres) | ⚠️ gap |
 | Payments (top-ups) | ❌ no Vercel-native payments → **Stripe** | ⚠️ only when charging |
 
@@ -427,8 +455,9 @@ gives durable, unlimited-duration execution with pause/resume for the heavy
   Vercel Marketplace**, which provisions **Neon Postgres** with automatic
   provisioning and **unified billing** — no separate account or invoice. From
   the operator's seat it's still one service.
-- **Stripe is the only unavoidable second relationship**, and only for credit
-  top-ups (Phase 3) — the MVP doesn't touch it.
+- **Outside Vercel you need just two small services:** a transactional email
+  sender (**Resend**) for magic-link login, and **Stripe** for credit top-ups
+  (Phase 3). Both are tiny, well-scoped integrations — not a second platform.
 - Bonus: **AI Gateway** doubles as the cost-control layer (metered spend +
   observability + failover), so "use Vercel" and "control token cost" align.
 
@@ -469,7 +498,7 @@ Wiring notes:
 - Spike: Claude Agent SDK loading the e-conomic MCP with injected per-user creds.
 
 **Phase 1 — Skateboard MVP**
-- Next.js + Google sign-in + Postgres.
+- Next.js + **magic-link sign-in** (Auth.js Email + Resend) + Postgres.
 - Connect **one** storage (e-conomic) with per-user grant token.
 - **Multi-tab, persisted chat** (threads restore on return) with a **kickoff
   regnskab briefing** on each new tab.
@@ -488,7 +517,8 @@ Wiring notes:
   credit guardrails in the agent host. No subscriptions.
 
 **Phase 4 — Expand storages**
-- Drive/Dropbox, Stripe, bank feeds, more accounting actions.
+- **Microsoft / Outlook inbox** (Graph), Dinero accounting connector,
+  Drive/Dropbox, bank feeds, more accounting actions.
 
 ---
 

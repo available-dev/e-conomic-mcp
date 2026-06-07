@@ -129,6 +129,11 @@
     .band .btn-o { color: #fff; border-color: rgba(255,255,255,.35); }
     .band .btn-o:hover { background: rgba(255,255,255,.1); }
     .band .btn-light { background: #fff; color: var(--purple); }
+    .signup { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 32px; }
+    .signup input { font-family: var(--sans); font-size: 15px; padding: 13px 20px; border-radius: 999px; border: 1px solid rgba(255,255,255,.3); background: rgba(255,255,255,.12); color: #fff; width: 280px; max-width: 100%; }
+    .signup input::placeholder { color: #cdc6e8; }
+    .signup input:focus { outline: none; border-color: #fff; background: rgba(255,255,255,.18); }
+    .band-micro { color: #cdc6e8; font-size: 13.5px; margin-top: 16px; }
 
     footer { padding: 56px 0; }
     .foot { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; border-top: 1px solid var(--line); padding-top: 28px; }
@@ -232,11 +237,12 @@
   <div class="wrap">
     <div id="start" class="band">
       <h2>Hand the receipts to your AI accountant.</h2>
-      <p>Sign in with Google, connect e-conomic, and get your $5 in free credit.</p>
-      <div class="cta">
-        <a class="btn btn-light" href="#">Sign up with Google</a>
-        <a class="btn btn-o" href="#how">See how it works</a>
-      </div>
+      <p>Sign up with your email, connect e-conomic, and get your $5 in free credit.</p>
+      <form class="signup" onsubmit="return false;">
+        <input type="email" inputmode="email" placeholder="you@company.dk" aria-label="Email address" required />
+        <button class="btn btn-light" type="submit">Send me a magic link</button>
+      </form>
+      <p class="band-micro">No password. We email you a secure sign-in link.</p>
     </div>
   </div>
 

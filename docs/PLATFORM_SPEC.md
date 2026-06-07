@@ -547,8 +547,8 @@ Wiring notes:
   a per-user MCP **host** + chat UI + auth + billing around it.
 - **Single-service, Vercel-first:** Functions/Fluid Compute, Workflows, Cron,
   Blob, Edge Config, AI SDK 6 + AI Gateway — plus **Neon Postgres via the Vercel
-  Marketplace** (unified billing) and **Auth.js** for Google login. Only real
-  gap: a DB (covered by Marketplace) and Stripe for top-ups.
+  Marketplace** (unified billing) and **Auth.js magic-link** login. Outside
+  Vercel only: Neon (via Marketplace), Resend (magic-link email), Stripe (top-ups).
 - **Attach receipts: already built.** The connector ships multipart upload tools
   (`economic_upload_file` + typed voucher-attachment tools, PDF/JPG/PNG, draft &
   booked). No connector work needed for the flagship action.

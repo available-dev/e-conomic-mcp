@@ -201,9 +201,10 @@ rest. Login uses magic link, so also: `verification_tokens` (Auth.js) and
 - **Auth.js Email provider:** user enters email → we send a one-time sign-in link
   → clicking it creates/restores the session. Tokens/sessions in our Postgres
   (Auth.js adapter); needs a `verification_tokens` table.
-- **Email delivery** needs a transactional email sender (e.g. **Resend** /
-  Postmark / SES) — see §12; this is one of the few things Vercel doesn't provide
-  natively.
+- **Email delivery: Resend** (decided). Transactional sender for the sign-in
+  mail — simple API, React Email templates, generous free tier. One of the few
+  things Vercel doesn't provide natively (see §12). Needs domain verification
+  (SPF/DKIM) on `konteo.ai` at Cloudflare.
 - Optional later: add Google/Microsoft as *login* options too — but magic link is
   the primary, provider-agnostic path.
 
@@ -438,7 +439,7 @@ achievable. Vercel-native primitives cover almost everything; there's exactly
 | Receipt/PDF storage | **Vercel Blob** | ✅ |
 | Flags / fast config | **Edge Config** | ✅ |
 | Login (magic link) | **Auth.js** Email provider — open-source lib *in* the app, sessions in our DB | ✅ no 3rd-party auth vendor |
-| Sending the magic-link email | ❌ no Vercel-native email → **Resend** (or Postmark/SES) | ⚠️ small gap |
+| Sending the magic-link email | ❌ no Vercel-native email → **Resend** (decided) | ⚠️ small gap |
 | **Database** | ❌ Vercel Postgres/KV **sunset**; only via **Marketplace** (Neon Postgres) | ⚠️ gap |
 | Payments (top-ups) | ❌ no Vercel-native payments → **Stripe** | ⚠️ only when charging |
 

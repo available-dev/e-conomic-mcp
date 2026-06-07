@@ -211,22 +211,29 @@ multi-tenant SaaS, every user attaches **their own** accounts. Per storage:
 4. Agent proposes matches in chat with confidence + preview.
 5. On user confirm → agent attaches the receipt file to the e-conomic voucher.
 
-### ⚠️ #1 technical risk — confirmed during spec research
-The classic e-conomic REST API (`restapi.e-conomic.com`, which our MCP server
-wraps) exposes voucher attachments as **GET only** — you can *read* an existing
-attachment but **cannot upload** one. File/receipt **upload** lives in
-e-conomic's separate Apps/Files API surface.
+### Attaching the receipt — verified supported (one small connector addition)
+The e-conomic REST API **does** support uploading voucher attachments:
+`POST` / `PUT` / `DELETE` on the voucher `attachment` endpoint, sent as
+**`multipart/form-data`**, accepting **PDF / JPG / JPEG / GIF / PNG**, for **both
+draft and booked vouchers**. Same `restapi.e-conomic.com` host and the same
+`X-AppSecretToken` / `X-AgreementGrantToken` auth our connector already uses.
 
-**Implication:** before committing to the attach step, we must:
-1. Confirm the correct e-conomic upload endpoint (Apps/Files API) and its auth.
-2. Extend the e-conomic connector with an `economic_attach_voucher_file` (or
-   similar) tool that targets it.
+> ⚠️ Gotcha that misled an earlier draft of this spec: the **OpenAPI spec
+> bundled in this repo (`spec/economic-openapi.json`) only documents the `GET`**
+> on that endpoint — the `POST`/`PUT`/`DELETE` are missing from our spec, not
+> from the API. So the capability is real; our schema is just incomplete.
 
-Until that's confirmed, a de-risked **v1 scope** is *find + propose + draft*:
-the agent finds the receipt and prepares everything, and either (a) the user
-uploads with one click via e-conomic's UI, or (b) we ship upload as a fast-follow
-once the API is verified. **This does not block building the rest of the
-platform.**
+**What we need to build (small):**
+1. Add an `economic_attach_voucher_file` tool to the connector that `POST`s a
+   file as `multipart/form-data` to the voucher attachment endpoint.
+2. Teach the connector's HTTP client to send multipart bodies — today
+   `economicClient.ts` only serializes JSON (`Content-Type: application/json`),
+   so this is the one genuinely new capability. Modest, well-scoped.
+3. (Optional) backfill the missing `POST/PUT/DELETE` operations into the bundled
+   OpenAPI spec so discovery/dynamic tools see them too.
+
+**Not a blocker.** The full *find → propose → confirm → attach* loop is
+achievable in v1; the only net-new code is multipart upload support.
 
 ---
 
@@ -290,7 +297,9 @@ an HTTP request open.
 ## 12. Phased roadmap
 
 **Phase 0 — De-risk (days)**
-- Verify e-conomic file-upload API + auth. ← unblocks the flagship action.
+- ✅ e-conomic file-upload API confirmed (POST multipart to the voucher
+  attachment endpoint, PDF/JPG/PNG, draft & booked). Remaining: add the
+  multipart upload tool to the connector.
 - Confirm e-conomic multi-tenant grant-token flow end to end.
 - Spike: Claude Agent SDK loading the e-conomic MCP with injected per-user creds.
 
@@ -315,8 +324,9 @@ an HTTP request open.
 
 ## 13. Open decisions / questions for you
 
-1. **e-conomic upload API** — do we have (or can we get) access to e-conomic's
-   Apps/Files API and an app registration? This gates the attach action.
+1. **e-conomic app registration** — upload is confirmed possible via the REST
+   API (no separate Apps/Files API needed); we just need our registered app's
+   `AppSecretToken` and the per-user grant-token flow.
 2. **Auth provider** — Auth.js (more control, free) vs Clerk (faster, paid)?
 3. **DB/host** — Supabase (auth+db+storage bundled) vs Neon + Auth.js?
 4. **Language/market** — Danish-first UI & agent? (Assuming yes given e-conomic.)
@@ -332,8 +342,10 @@ an HTTP request open.
   a per-user MCP **host** + chat UI + auth + billing around it.
 - Recommended: **monorepo**, **Next.js on Vercel**, **Claude Agent SDK**,
   **Postgres**, Google sign-in, encrypted per-user tokens.
-- **#1 risk:** e-conomic can't *upload* attachments via the REST API we wrap —
-  verify the Apps/Files API first; everything else can proceed in parallel.
+- **Attach receipts: confirmed doable.** e-conomic's REST API supports uploading
+  voucher attachments (POST multipart, PDF/JPG/PNG, draft & booked). Our bundled
+  OpenAPI spec just omits it. Only net-new work: add a multipart upload tool to
+  the connector.
 - **Cost is a first-class design constraint:** subscription + metered overage,
   model routing, pre-filtering, background batching, and hard budget guardrails
   keep per-workflow cost under the revenue it consumes.

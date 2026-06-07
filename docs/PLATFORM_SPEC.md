@@ -2,7 +2,7 @@
 
 > Status: **Draft for review** · Owner: rasmus@available.dk · Date: 2026-06-07
 >
-> A hosted web app where a user signs up with Google, connects their accounting
+> A hosted web app where a user signs up with a magic link, connects their accounting
 > and document "storages" (e-conomic, Gmail, …), and chats with an AI
 > "accountant" agent that can act on their behalf — starting with **finding and
 > attaching receipts**.
@@ -58,7 +58,7 @@ is a connector swap, not a rewrite.
 ```
 ┌──────────────────────────────────────────────────────────────┐
 │  Web app  (Next.js · hosted on Vercel)                         │
-│  • Google sign-in                                              │
+│  • Magic-link sign-in (email)                                  │
 │  • Chat UI ("your accountant")                                 │
 │  • Connections page: attach/disconnect storages               │
 │  • Billing / usage dashboard                                   │
@@ -140,7 +140,7 @@ session).
 |------------------|------------------------------------------|-----|
 | Framework        | **Next.js (App Router)**                 | UI + API routes + streaming in one deployable |
 | Host             | **Vercel** (start), revisit Cloudflare   | Easiest Next.js + Node agent path; see §12 |
-| Auth             | **Auth.js (NextAuth)** w/ Google, or Clerk | Google sign-in out of the box |
+| Auth             | **Auth.js (NextAuth)** Email provider (magic link) | Passwordless, provider-agnostic login |
 | DB               | **Postgres** (Supabase / Neon)           | Relational; Supabase also gives auth/storage if wanted |
 | ORM              | **Drizzle** or Prisma                    | Typed schema, migrations |
 | Agent runtime    | **Claude Agent SDK** + **Claude Opus 4.x** / Sonnet for cheap paths | Native MCP support, tool loop handled for us |
@@ -159,7 +159,7 @@ session).
 ## 6. Data model (first cut)
 
 ```
-users            (id, email, google_sub, created_at)
+users            (id, email, email_verified_at, created_at)
 connections      (id, user_id, storage_kind, status,
                   credentials_encrypted, scopes, created_at, expires_at)
 threads          (id, user_id, title, created_at)

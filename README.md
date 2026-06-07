@@ -16,7 +16,7 @@ generated from an OpenAPI spec.
 
 ```bash
 # install
-npm install -g @available/e-conomic-mcp
+npm install -g @available-dev/e-conomic-mcp
 
 # store your e-conomic credentials locally (app secret + agreement grant token)
 e-conomic-mcp auth login
@@ -43,6 +43,10 @@ Now ask Claude things like *"list my 5 most recent e-conomic customers"*.
 
 - **Full API coverage** via a universal `economic_request` tool — any method,
   any path.
+- **File uploads** via `economic_upload_file` and typed attachment tools —
+  attach receipts/PDFs to vouchers, draft invoices, orders and quotes using
+  e-conomic's `multipart/form-data` endpoints (which `economic_request` can't
+  reach, as it only sends JSON).
 - **Typed convenience tools** for the high-traffic resources (customers,
   suppliers, products, draft/booked invoices, orders, quotes, journals,
   accounts, groups, payment terms, VAT zones, currencies, units, employees).
@@ -64,7 +68,7 @@ Now ask Claude things like *"list my 5 most recent e-conomic customers"*.
 ### From npm
 
 ```bash
-npm install -g @available/e-conomic-mcp
+npm install -g @available-dev/e-conomic-mcp
 ```
 
 This puts an `e-conomic-mcp` command on your PATH.
@@ -84,8 +88,11 @@ npm link               # optional: expose the `e-conomic-mcp` command globally
 e-conomic-mcp [serve]            Start the MCP server over stdio (default)
 e-conomic-mcp auth login         Interactively store credentials locally
 e-conomic-mcp auth set [flags]   Store credentials non-interactively
+e-conomic-mcp auth list          List configured account profiles
+e-conomic-mcp auth use <name>    Set the default account profile
 e-conomic-mcp auth status        Show where credentials are coming from
-e-conomic-mcp auth logout        Remove locally stored credentials
+e-conomic-mcp auth remove <name> Remove a stored account profile
+e-conomic-mcp auth logout        Remove all locally stored credentials
 e-conomic-mcp doctor             Check credentials and API connectivity
 e-conomic-mcp --help | --version
 ```
@@ -112,7 +119,8 @@ You can provide them two ways (environment variables always take precedence):
    Credentials are written to `~/.config/e-conomic-mcp/credentials.json`
    (override with `$ECONOMIC_CONFIG_DIR` / `$XDG_CONFIG_HOME`) with `0600`
    permissions. Check with `e-conomic-mcp auth status`; remove with
-   `e-conomic-mcp auth logout`.
+   `e-conomic-mcp auth logout`. Multiple companies are supported as named
+   profiles — see [Multiple accounts / profiles](#multiple-accounts--profiles).
 
 2. **Environment variables** — set `ECONOMIC_APP_SECRET_TOKEN` and
    `ECONOMIC_AGREEMENT_GRANT_TOKEN` (e.g. in your MCP client config, or via
@@ -120,6 +128,46 @@ You can provide them two ways (environment variables always take precedence):
 
 > OAuth support is planned; the credential store format is forward-compatible
 > with it.
+
+## Multiple accounts / profiles
+
+The server can manage several e-conomic companies at once, stored as named
+**profiles**. A single running server can talk to any of them — no need to run
+one process per company.
+
+Store a profile per account (omit `--profile` to use the `default` profile):
+
+```bash
+e-conomic-mcp auth set --profile acme   --app-secret <token> --agreement-grant <token>
+e-conomic-mcp auth set --profile globex --app-secret <token> --agreement-grant <token>
+
+e-conomic-mcp auth list                 # show profiles; * marks the active one
+e-conomic-mcp auth use globex           # change the default profile
+e-conomic-mcp doctor --all              # check connectivity for every profile
+```
+
+Profiles live in the same `credentials.json` under a `profiles` map. Existing
+single-account files are read transparently and treated as the `default`
+profile — no migration needed.
+
+**Choosing a profile at runtime.** Every data tool takes an optional `profile`
+argument to target a specific company for that one call:
+
+```jsonc
+// economic_list_customers
+{ "profile": "globex", "filter": "name$like:Acme" }
+```
+
+Two tools manage profiles from within a conversation:
+
+- **`economic_list_profiles`** — list configured profiles and the active one
+  (no secrets are returned).
+- **`economic_use_profile`** — switch the active profile, used as the default
+  for calls that don't pass `profile`.
+
+The active profile defaults to the stored default (or `ECONOMIC_PROFILE`).
+Environment credentials (`ECONOMIC_APP_SECRET_TOKEN` etc.) configure — and take
+precedence for — the active profile.
 
 ## Usage
 
@@ -170,6 +218,7 @@ credentials and connectivity first.
 | `ECONOMIC_APP_SECRET_TOKEN` | _(required)_ | App secret token. |
 | `ECONOMIC_AGREEMENT_GRANT_TOKEN` | _(required)_ | Agreement grant token. |
 | `ECONOMIC_BASE_URL` | `https://restapi.e-conomic.com` | API base URL. |
+| `ECONOMIC_PROFILE` | `default` | Active account profile to use (see [Multiple accounts](#multiple-accounts--profiles)). |
 | `ECONOMIC_OPENAPI_SPEC` | _(bundled)_ | Override the bundled OpenAPI spec with a path/URL (e.g. a newer one). |
 | `ECONOMIC_DYNAMIC_TOOLS` | `false` | Generate one tool per operation from the spec. |
 | `ECONOMIC_DYNAMIC_TOOLS_LIMIT` | `200` | Max number of dynamic tools to generate. |
@@ -181,12 +230,24 @@ credentials and connectivity first.
 ### Generic (always available)
 
 - **`economic_request`** — call any endpoint: `{ method, path, query?, body? }`.
+  Sends a JSON body, so it cannot be used for binary file uploads — use
+  `economic_upload_file` for those.
+- **`economic_upload_file`** — upload a binary file to any `multipart/form-data`
+  endpoint: `{ path, filePath | content, fileName?, contentType?, method? }`.
+  The universal escape hatch for the attachment endpoints. Supply the file as a
+  local `filePath` or base64 `content`. Supported formats: `.pdf`, `.jpg`,
+  `.jpeg`, `.gif`, `.png` (draft invoices/orders/quotes accept PDF only); max
+  9 MB. Use `method: "PATCH"` to append pages to an existing voucher attachment.
 - **`economic_list_resources`** — list resource collections (from the spec, or
   the API's self-describing root).
 - **`economic_get_collection`** — fetch a collection with `filter`, `sort`,
   `pageSize`, `maxItems`, `fetchAll`.
 - **`economic_describe_endpoint`** — show an endpoint's parameters, request-body
   and response schema (from the bundled OpenAPI spec).
+- **`economic_list_profiles`** / **`economic_use_profile`** — list configured
+  account profiles and switch the active one (see
+  [Multiple accounts](#multiple-accounts--profiles)). Every data tool also takes
+  an optional `profile` argument.
 
 ### Typed convenience tools
 
@@ -198,11 +259,18 @@ accounts, currencies, units, employees.
 Writes: `economic_create_customer`, `economic_update_customer`,
 `economic_create_draft_invoice`, `economic_book_draft_invoice`.
 
+Attachments: `economic_upload_voucher_attachment` (with `append` to add pages),
+`economic_get_voucher_attachment`, `economic_delete_voucher_attachment`, and
+`economic_upload_draft_invoice_attachment` / `_draft_order_attachment` /
+`_draft_quote_attachment`.
+
 ### Dynamic per-endpoint tools
 
 When `ECONOMIC_DYNAMIC_TOOLS=true`, every operation in the spec is exposed as an
-`economic_op_<operationId>` tool with a generated input schema (160 operations;
-bounded by `ECONOMIC_DYNAMIC_TOOLS_LIMIT`).
+`economic_op_<operationId>` tool with a generated input schema (176 operations;
+bounded by `ECONOMIC_DYNAMIC_TOOLS_LIMIT`). Operations with a
+`multipart/form-data` body (the attachment uploads) take `filePath`/`content`
+inputs and are sent as multipart automatically.
 
 ## Filtering & sorting
 

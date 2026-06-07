@@ -15,8 +15,33 @@ export interface RequestOptions {
   path: string;
   /** Query parameters. Arrays are repeated; objects are JSON-stringified. */
   query?: Record<string, unknown> | undefined;
-  /** JSON request body (objects/arrays). Ignored for GET/DELETE. */
+  /**
+   * JSON request body. Objects/arrays are serialized with JSON.stringify; a
+   * string is treated as raw JSON text and sent verbatim (so callers — or models
+   * that pass an already-stringified body — don't get double-encoded). Ignored
+   * for GET/DELETE.
+   */
   body?: unknown;
+}
+
+export interface UploadOptions {
+  /** HTTP method for the upload. POST creates; PATCH appends pages (vouchers). */
+  method?: "POST" | "PATCH";
+  /** Endpoint path, e.g. "/journals/1/vouchers/2024-5/attachment/file". */
+  path: string;
+  /** Query parameters, encoded the same way as for `request`. */
+  query?: Record<string, unknown> | undefined;
+  /** Raw file bytes to upload. */
+  data: Uint8Array;
+  /** File name sent in the multipart part (e.g. "receipt.pdf"). */
+  fileName: string;
+  /** MIME type; inferred from the file name when omitted. */
+  contentType?: string;
+  /**
+   * Multipart field name. e-conomic ignores it and reads the file part of the
+   * stream directly, so the default of "file" is fine for its endpoints.
+   */
+  fieldName?: string;
 }
 
 export interface EconomicResponse {
@@ -65,33 +90,75 @@ export class EconomicClient {
 
   async request(opts: RequestOptions): Promise<EconomicResponse> {
     const url = this.buildUrl(opts.path, opts.query);
-    const headers: Record<string, string> = {
+    const headers: Record<string, string> = this.authHeaders();
+
+    const hasBody =
+      opts.body !== undefined && opts.method !== "GET" && opts.method !== "DELETE";
+
+    let serializedBody: string | undefined;
+    if (hasBody) {
+      headers["Content-Type"] = "application/json";
+      // A string body is assumed to already be JSON text (models calling the
+      // generic tool routinely pass a pre-stringified object); sending it
+      // verbatim avoids JSON.stringify double-encoding it into a quoted string,
+      // which e-conomic rejects as "Invalid json in request body".
+      serializedBody =
+        typeof opts.body === "string" ? opts.body : JSON.stringify(opts.body);
+    }
+
+    return this.execute(opts.method, url, headers, serializedBody);
+  }
+
+  /**
+   * Upload a binary file as `multipart/form-data`.
+   *
+   * e-conomic's attachment endpoints (vouchers, draft invoices/orders/quotes)
+   * reject `application/json` and require a multipart body. We deliberately do
+   * NOT set the Content-Type header: `fetch` derives it from the FormData,
+   * including the boundary the API needs to locate the file part.
+   */
+  async uploadFile(opts: UploadOptions): Promise<EconomicResponse> {
+    const url = this.buildUrl(opts.path, opts.query);
+    const headers = this.authHeaders();
+
+    const contentType = opts.contentType ?? guessAttachmentContentType(opts.fileName);
+    const form = new FormData();
+    form.append(
+      opts.fieldName ?? "file",
+      new Blob([opts.data], { type: contentType }),
+      opts.fileName,
+    );
+
+    return this.execute(opts.method ?? "POST", url, headers, form);
+  }
+
+  private authHeaders(): Record<string, string> {
+    return {
       "X-AppSecretToken": this.config.appSecretToken,
       "X-AgreementGrantToken": this.config.agreementGrantToken,
       Accept: "application/json",
     };
+  }
 
-    const hasBody =
-      opts.body !== undefined && opts.method !== "GET" && opts.method !== "DELETE";
-    if (hasBody) headers["Content-Type"] = "application/json";
-
+  /** Run a single request with timeout handling and structured error reporting. */
+  private async execute(
+    method: string,
+    url: string,
+    headers: Record<string, string>,
+    body: string | FormData | undefined,
+  ): Promise<EconomicResponse> {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), this.config.timeoutMs);
     let response: Response;
     try {
-      response = await fetch(url, {
-        method: opts.method,
-        headers,
-        body: hasBody ? JSON.stringify(opts.body) : undefined,
-        signal: controller.signal,
-      });
+      response = await fetch(url, { method, headers, body, signal: controller.signal });
     } catch (err) {
       if (err instanceof Error && err.name === "AbortError") {
         throw new EconomicApiError(
           `Request timed out after ${this.config.timeoutMs}ms`,
           0,
           null,
-          opts.method,
+          method,
           url,
         );
       }
@@ -99,7 +166,7 @@ export class EconomicClient {
         `Network error: ${err instanceof Error ? err.message : String(err)}`,
         0,
         null,
-        opts.method,
+        method,
         url,
       );
     } finally {
@@ -110,10 +177,10 @@ export class EconomicClient {
 
     if (!response.ok) {
       throw new EconomicApiError(
-        `e-conomic API returned ${response.status} ${response.statusText} for ${opts.method} ${url}`,
+        `e-conomic API returned ${response.status} ${response.statusText} for ${method} ${url}`,
         response.status,
         data,
-        opts.method,
+        method,
         url,
       );
     }
@@ -194,6 +261,21 @@ async function parseBody(response: Response): Promise<unknown> {
     }
   }
   return text;
+}
+
+/** e-conomic attachment endpoints accept .pdf, .jpg, .jpeg, .gif and .png. */
+const ATTACHMENT_CONTENT_TYPES: Record<string, string> = {
+  pdf: "application/pdf",
+  jpg: "image/jpeg",
+  jpeg: "image/jpeg",
+  png: "image/png",
+  gif: "image/gif",
+};
+
+/** Infer a MIME type from a file name's extension, defaulting to PDF. */
+export function guessAttachmentContentType(fileName: string): string {
+  const ext = fileName.split(".").pop()?.toLowerCase() ?? "";
+  return ATTACHMENT_CONTENT_TYPES[ext] ?? "application/octet-stream";
 }
 
 function looksLikeJson(text: string): boolean {

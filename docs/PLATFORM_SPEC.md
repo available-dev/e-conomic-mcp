@@ -77,6 +77,11 @@ e-conomic  Gmail   (Stripe)     (Drive/Dropbox)  ┌─────────�
                                                  └──────────────┘
 ```
 
+> Two cross-cutting services sit alongside the connectors: a **document service**
+> (vision-based reading/verification + PDF generation) and **object storage** for
+> receipts and generated PDFs. Users can also **upload files directly in the
+> chat**, which feed the same document service.
+
 ---
 
 ## 4. Recommended repo layout — **monorepo (pnpm workspaces)**
@@ -120,17 +125,20 @@ workspaces, per-package builds). Worth it.
 | Layer            | Choice                                   | Why |
 |------------------|------------------------------------------|-----|
 | Framework        | **Next.js (App Router)**                 | UI + API routes + streaming in one deployable |
-| Host             | **Vercel** (start), revisit Cloudflare   | Easiest Next.js + Node agent path; see §11 |
+| Host             | **Vercel** (start), revisit Cloudflare   | Easiest Next.js + Node agent path; see §12 |
 | Auth             | **Auth.js (NextAuth)** w/ Google, or Clerk | Google sign-in out of the box |
 | DB               | **Postgres** (Supabase / Neon)           | Relational; Supabase also gives auth/storage if wanted |
 | ORM              | **Drizzle** or Prisma                    | Typed schema, migrations |
 | Agent runtime    | **Claude Agent SDK** + **Claude Opus 4.x** / Sonnet for cheap paths | Native MCP support, tool loop handled for us |
 | Token encryption | **libsodium / AES-GCM** w/ KMS-held key  | Financial creds at rest must be encrypted |
 | Queue (later)    | Inngest / QStash                         | Background receipt-matching jobs |
+| Read documents   | **Claude vision** (PDF + image input); OCR fallback (Textract) | Verify receipts before upload |
+| Generate PDFs    | **pdf-lib / react-pdf**, or Playwright (HTML→PDF) | Reports + generated *bilag* |
+| File storage     | **S3 / Supabase Storage / Cloudflare R2** | Receipts + generated PDFs, EU region |
 
 > On models: route cheap/structured steps (classification, extraction, "which
 > voucher matches this email") to **Sonnet/Haiku**, reserve **Opus** for the
-> interactive accountant reasoning. This is also a cost lever (see §10).
+> interactive accountant reasoning. This is also a cost lever (see §11).
 
 ---
 
@@ -146,6 +154,9 @@ usage_events     (id, user_id, thread_id, model, input_tokens,
                   output_tokens, cost_cents, created_at)
 subscriptions    (id, user_id, plan, status, stripe_customer_id,
                   included_credits, renews_at)
+files            (id, user_id, kind[receipt|generated|report],
+                  source[gmail|chat_upload|generated], storage_url, mime,
+                  sha256, extracted_json, linked_voucher, message_id, created_at)
 ```
 
 `storage_kind` ∈ {`economic`, `gmail`, `drive`, …}. `credentials_encrypted` holds
@@ -237,7 +248,55 @@ achievable in v1; the only net-new code is multipart upload support.
 
 ---
 
-## 10. Monetization & cost control  *(you flagged this — it's load-bearing)*
+## 10. Document & media processing (read · verify · generate)
+
+Receipts *are* documents and images, so the platform treats files as a
+first-class capability — not just blobs shuffled between Gmail and e-conomic.
+
+### Reading & verifying (vision) — the trust mechanism
+- Claude is natively multimodal: it reads **images (PNG/JPG)** and **PDFs**
+  directly as input content blocks — no separate OCR service needed for the
+  common case.
+- **Before any upload, the agent opens the receipt and verifies it:** extracts
+  supplier, date, amount, VAT, currency — and checks they match the e-conomic
+  voucher it's about to attach to. Mismatches are surfaced to the user, never
+  silently uploaded. The agent doesn't attach a file it hasn't "looked at."
+- **OCR fallback** (AWS Textract / Google Document AI / Tesseract) only when
+  vision confidence is low on a poor scan — used sparingly to keep cost down.
+
+### Generating PDFs — two distinct needs
+1. **Reports & exports** — expense summaries, a month's reconciliation, or a
+   single combined PDF of all receipts for a period.
+2. **Generating a receipt/voucher itself** — sometimes no proper receipt exists
+   (cash expense, a bank line, a handwritten note, an email order confirmation).
+   The agent produces a clean, compliant **bilag** PDF from the available data
+   (or from a photo + the fields it extracted) so there's a real document to
+   attach to the voucher.
+
+Tooling: **HTML→PDF via Playwright/Puppeteer** for rich/branded layouts, or
+**pdf-lib / react-pdf** for lightweight programmatic generation and merging.
+Generation runs server-side in the document service.
+
+### User uploads in chat
+The user can **drag a receipt (photo or PDF) straight into the conversation** —
+e.g. "here's the receipt for that Circle K stop, file it." Uploaded files go
+through the same document service: stored in object storage, read/verified by
+vision, then matched and attached to the right e-conomic voucher. This is often
+the *fastest* path for a receipt that never arrived by email (paper, in-app
+receipts, photos of a till slip).
+
+### File storage
+- **Object storage** (S3 / Supabase Storage / Cloudflare R2), EU region, private
+  buckets, signed URLs.
+- Store the original-from-source **and** any generated/normalized version; link
+  both to the e-conomic voucher and the chat message that produced them.
+
+### Where it lives
+A **document service** (a module/route in the web app, or a small worker) the
+agent calls via tools, alongside the storage connectors:
+`read_document` (vision extract), `generate_pdf`, `store_file` / `get_file`.
+
+## 11. Monetization & cost control  *(you flagged this — it's load-bearing)*
 
 Agent token usage is the dominant variable cost. Design for it from day one.
 
@@ -278,7 +337,7 @@ subscription revenue it consumes. Instrument it from the first workflow.
 
 ---
 
-## 11. Hosting: Vercel vs Cloudflare
+## 12. Hosting: Vercel vs Cloudflare
 
 | | Vercel | Cloudflare (Workers/Pages) |
 |---|---|---|
@@ -294,7 +353,7 @@ an HTTP request open.
 
 ---
 
-## 12. Phased roadmap
+## 13. Phased roadmap
 
 **Phase 0 — De-risk (days)**
 - ✅ e-conomic file-upload API confirmed (POST multipart to the voucher
@@ -311,7 +370,8 @@ an HTTP request open.
 
 **Phase 2 — Flagship workflow**
 - Add Gmail connection (read-only).
-- Find + propose receipt matches; confirm-to-attach (pending §9 upload API).
+- Find + propose receipt matches; verify with vision → confirm-to-attach (§9 + §10).
+- Document service: read/verify receipts, in-chat upload, generate *bilag* PDFs.
 - Confirmation guardrails on writes.
 
 **Phase 3 — Monetize**
@@ -322,7 +382,7 @@ an HTTP request open.
 
 ---
 
-## 13. Open decisions / questions for you
+## 14. Open decisions / questions for you
 
 1. **e-conomic app registration** — upload is confirmed possible via the REST
    API (no separate Apps/Files API needed); we just need our registered app's
@@ -336,7 +396,7 @@ an HTTP request open.
 
 ---
 
-## 14. TL;DR
+## 15. TL;DR
 
 - You've **already built the hardest connector** (e-conomic MCP). The platform is
   a per-user MCP **host** + chat UI + auth + billing around it.
@@ -346,6 +406,9 @@ an HTTP request open.
   voucher attachments (POST multipart, PDF/JPG/PNG, draft & booked). Our bundled
   OpenAPI spec just omits it. Only net-new work: add a multipart upload tool to
   the connector.
+- **Documents are first-class:** Claude vision reads/verifies receipts (PDF +
+  image) before anything is booked; the platform also generates PDFs (reports and
+  *bilag* it creates itself); users can upload files straight into the chat.
 - **Cost is a first-class design constraint:** subscription + metered overage,
   model routing, pre-filtering, background batching, and hard budget guardrails
   keep per-workflow cost under the revenue it consumes.

@@ -229,6 +229,24 @@ multi-tenant SaaS, every user attaches **their own** accounts. Per storage:
   explicit confirmation step surfaced in the UI ("Attach receipt X to voucher Y?
   [Confirm]") before execution.
 
+### Chat UX — tabs, persistence, kickoff briefing
+- **Multiple chats in tabs.** The app runs several conversations at once (like
+  browser tabs) so the user can have different things going in parallel — one tab
+  reconciling April receipts, another drafting an invoice, another asking a
+  question. Each tab is an **independent agent thread** with its own context.
+- **Persistence.** Tabs and their history are saved (`threads` + `messages`) and
+  restored on return, across devices/sessions — closing the app loses nothing.
+  Tabs get auto-titles from their first task (e.g. "April receipts").
+- **Kickoff briefing.** Every *new* chat opens with an auto-generated **status on
+  the current regnskab**, produced before the user types anything — the agent
+  queries the accounting connector and summarizes. e.g. *"April: 3 vouchers
+  missing receipts · 2 draft invoices unsent · VAT period closes in 6 days."*
+  It orients the user and offers one-tap next actions ("Find the 3 receipts →").
+  - **Keep it cheap:** the briefing is a short, **cheap-model** (Sonnet/Haiku)
+    summary over a few targeted connector reads, cached briefly — not a full Opus
+    turn. (A cost lever, per §11; also it shouldn't burn the user's credits just
+    to open a tab — fund kickoffs from a tiny allowance or the cheap model.)
+
 ---
 
 ## 9. Flagship workflow: find & attach receipts
@@ -453,6 +471,8 @@ Wiring notes:
 **Phase 1 — Skateboard MVP**
 - Next.js + Google sign-in + Postgres.
 - Connect **one** storage (e-conomic) with per-user grant token.
+- **Multi-tab, persisted chat** (threads restore on return) with a **kickoff
+  regnskab briefing** on each new tab.
 - Chat that can *read* e-conomic ("list my April expenses missing receipts").
 - Meter real model spend per turn (via AI Gateway) → record `usage_events`.
 

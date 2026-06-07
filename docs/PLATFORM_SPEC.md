@@ -44,6 +44,13 @@ This is the strategic bet: **we don't build N bespoke integrations into a
 monolith — we build a host that loads MCP connectors per user.** The e-conomic
 server becomes the first of many, and stays independently publishable/reusable.
 
+**The accounting system itself is just a connector.** e-conomic is the first
+backend, but **Dinero** (and others) are planned — same pattern: a Dinero MCP
+connector the user attaches instead of, or alongside, e-conomic. So the agent,
+chat UI, and the whole receipt workflow are written against a *generic
+accounting capability*, not hard-wired to e-conomic. Picking a different backend
+is a connector swap, not a rewrite.
+
 ---
 
 ## 3. High-level architecture
@@ -84,39 +91,46 @@ e-conomic  Gmail   (Stripe)     (Drive/Dropbox)  ┌─────────�
 
 ---
 
-## 4. Recommended repo layout — **monorepo (pnpm workspaces)**
+## 4. Repo layout — **platform is its own repo; connectors are separate**
 
-*(You asked me to recommend. Here it is, with reasoning.)*
-
-Restructure this repo into a workspace monorepo:
+> Updated decision. An earlier draft recommended a monorepo with the platform
+> living inside `e-conomic-mcp`. That stops making sense once there's a **second
+> accounting backend (Dinero)** — the platform sits *above* all connectors, and
+> e-conomic is just one of them. So the platform gets its **own repo**, and each
+> connector stays its own publishable package/repo.
 
 ```
-e-conomic-mcp/                 (repo root → rename later if desired)
-├── packages/
-│   └── e-conomic-mcp/         ← the existing server, moved here verbatim
-│                                 still published as @available/e-conomic-mcp
+<platform-repo>/                 ← NEW repo (the product: app + agent + marketing)
 ├── apps/
-│   └── web/                   ← Next.js app (UI + agent + API routes)
+│   ├── web/                     ← Next.js app (UI + agent + API routes)
+│   └── marketing/               ← the landing page
 ├── packages/
-│   ├── connectors/            ← shared connector registry / MCP launching
-│   └── core/                  ← shared types, db schema, crypto helpers
-├── pnpm-workspace.yaml
-└── docs/
+│   ├── connectors/              ← connector registry / MCP launching + the
+│   │                              generic "accounting capability" interface
+│   └── core/                    ← shared types, db schema, crypto helpers
+└── docs/                        ← this spec moves here
+
+available/e-conomic-mcp          ← stays as-is: one connector (@available/e-conomic-mcp)
+available/dinero-mcp             ← future: a second accounting connector
+available/<gmail-mcp, …>         ← future: more storages
 ```
 
-**Why monorepo, not a separate repo:**
+**Why a separate platform repo:**
 
-- The web app and the e-conomic connector will **co-evolve heavily** in the early
-  phase (e.g. we'll add the file-upload tool to the connector *because* the web
-  workflow needs it). Atomic cross-cutting commits beat version-bump ping-pong
-  across repos.
-- The MCP server **stays a standalone, publishable package** inside the
-  workspace — we keep the clean-library benefit without the cross-repo overhead.
-- Once the connector API stabilizes, extracting it to its own repo is a
-  mechanical `git filter-repo`, not a rewrite. Easy to defer, cheap to do later.
+- **Many backends, one platform.** e-conomic, Dinero, and future storages are
+  independent connectors with their own release cadence. The platform consumes
+  them; it shouldn't live inside any one of them.
+- **Clean licensing/visibility split.** Connectors can stay open-source; the
+  platform (product, billing, prompts) can have its own policy.
+- **The "accounting capability" is an interface.** The platform codes against a
+  generic accounting connector contract (find vouchers missing docs, upload
+  attachment, …) that e-conomic and Dinero connectors each satisfy.
 
-**Trade-off accepted:** a slightly more complex build/CI setup now (pnpm
-workspaces, per-package builds). Worth it.
+**Mechanics / migration note:** the spec + marketing page were drafted inside
+`e-conomic-mcp` (PR #7) because that was the available repo in that session. They
+should move to the new platform repo. Creating the repo is easy; **populating it
+requires a session scoped to that repo** (the sandbox git remote is scoped per
+session).
 
 ---
 
@@ -204,9 +218,12 @@ multi-tenant SaaS, every user attaches **their own** accounts. Per storage:
 - One **agent loop per chat turn**, built on the Claude Agent SDK.
 - At session start, the host loads the user's active connections, launches/attaches
   the corresponding MCP servers, and injects per-user credentials.
-- System prompt frames the agent as a **Danish-speaking bookkeeping assistant**
-  that is careful, cites what it found, and **asks before writing** to e-conomic
-  (no silent mutations of accounting records).
+- System prompt frames the agent as a careful **bookkeeping assistant** that
+  cites what it found and **asks before writing** to e-conomic (no silent
+  mutations of accounting records).
+- **Language:** the **UI is English**, but the agent **mirrors the user's
+  language** — if they write in Danish, it replies in Danish; English in, English
+  out. (Detect per-message; default English.)
 - Tool-call audit + cost metering wrap every step.
 - **Guardrails:** write operations to e-conomic (booking, attaching) require an
   explicit confirmation step surfaced in the UI ("Attach receipt X to voucher Y?
@@ -309,10 +326,11 @@ Decided: **usage-only, prepaid credit wallet.** No subscription tiers.
 - The user **tops up a credit balance** (e.g. 200 kr) and the agent **burns
   credits as it works**. When the balance runs low, they top up again.
 - Pricing math (internal, never shown): meter the **real model spend** per
-  agent turn (via AI Gateway), multiply by a **2–3× markup**, deduct from the
+  agent turn (via AI Gateway), multiply by a **3× markup**, deduct from the
   wallet. Users see *credits*, never tokens or the multiplier.
-- **No free model spend** baked into the price — optionally a small signup
-  credit grant to let people try it.
+- **$5 in free credits on signup** so people can try the flagship workflow before
+  paying. (At 3× markup that's ~$1.67 of real model spend — enough to reconcile a
+  month or two of receipts.)
 - **Stripe shrinks to one job: top-ups** (one-time payments / saved card for
   auto-reload). No subscriptions, no metered Stripe usage records, no invoicing
   logic. Much simpler than the earlier subscription design.
@@ -425,9 +443,9 @@ Revisit only if compute/egress cost ever dominates.
 - Confirmation guardrails on writes.
 
 **Phase 3 — Monetize (prepaid credits)**
-- Credit wallet + 2–3× markup on metered spend (hidden); Stripe **top-ups** only
-  (one-time + optional auto-reload); low-balance UX; credit guardrails in the
-  agent host. No subscriptions.
+- Credit wallet + **3× markup** on metered spend (hidden); **$5 signup grant**;
+  Stripe **top-ups** only (one-time + optional auto-reload); low-balance UX;
+  credit guardrails in the agent host. No subscriptions.
 
 **Phase 4 — Expand storages**
 - Drive/Dropbox, Stripe, bank feeds, more accounting actions.
@@ -441,14 +459,14 @@ Revisit only if compute/egress cost ever dominates.
    grant-token flow wired into the platform.
 2. ✅ **Hosting** — decided: **Vercel-first / single-service** (Vercel native +
    Neon Postgres via Marketplace for unified billing; Auth.js for login).
-3. ✅ **Pricing** — decided: **prepaid credits, ~2–3× markup (hidden), top-up via
-   Stripe.** No subscriptions. Open sub-question: starting credit grant size +
-   the exact markup (2× vs 3×).
+3. ✅ **Pricing** — decided: **prepaid credits, 3× markup (hidden), top-up via
+   Stripe, $5 free credits on signup.** No subscriptions.
 4. **Agent runtime** — **Vercel AI SDK 6** (tightest Next.js + one-line
    human-in-the-loop for our confirm-before-write step) vs **Claude Agent SDK**
    (best MCP/caching/compaction). Both route through AI Gateway. Lean AI SDK 6
    for the web app unless MCP ergonomics push us the other way.
-5. **Language/market** — Danish-first UI & agent? (Assuming yes given e-conomic.)
+5. ✅ **Language** — decided: **English UI; agent mirrors the user's language**
+   (replies in Danish to Danish input).
 6. **Compliance appetite** — how much GDPR/DPA groundwork up front vs. after PMF?
 
 ---

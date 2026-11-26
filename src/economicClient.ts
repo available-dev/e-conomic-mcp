@@ -73,6 +73,11 @@ export class EconomicClient {
       ? path
       : `${this.config.baseUrl}/${path.replace(/^\/+/, "")}`;
     const url = new URL(normalizedPath);
+    // Never send auth headers to a host other than the configured API (a model
+    // could be prompt-injected into passing an absolute URL as `path`).
+    if (url.origin !== new URL(this.config.baseUrl).origin) {
+      throw new Error(`Refusing request to ${url.origin}: not the configured e-conomic API host.`);
+    }
     if (query) {
       for (const [key, value] of Object.entries(query)) {
         if (value === undefined || value === null) continue;
